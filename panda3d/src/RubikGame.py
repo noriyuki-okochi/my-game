@@ -81,48 +81,48 @@ class RubikGame(ShowBase):
         # define Corner-Cubes
         #
         #1 cube_bsw
-        self.cube_bsw = RubikCube(self, '3', "models/misc/RubikCube")
+        self.cube_bsw = RubikCube(self, '3', "./models/misc/RubikCube")
         #2 cube_bse
-        self.cube_bse = RubikCube(self, '3', "models/misc/RubikCube")
+        self.cube_bse = RubikCube(self, '3', "./models/misc/RubikCube")
         #3 cube_ben
-        self.cube_ben = RubikCube(self, '3', "models/misc/RubikCube")
+        self.cube_ben = RubikCube(self, '3', "./models/misc/RubikCube")
         #4 cube_bwn
-        self.cube_bwn = RubikCube(self, '3', "models/misc/RubikCube")
+        self.cube_bwn = RubikCube(self, '3', "./models/misc/RubikCube")
         #5 cube_tsw
-        self.cube_tsw = RubikCube(self, '3', "models/misc/RubikCube")
+        self.cube_tsw = RubikCube(self, '3', "./models/misc/RubikCube")
         #6 cube_tse
-        self.cube_tse = RubikCube(self, '3', "models/misc/RubikCube")
+        self.cube_tse = RubikCube(self, '3', "./models/misc/RubikCube")
         #7 cube_ten
-        self.cube_ten = RubikCube(self, '3', "models/misc/RubikCube")
+        self.cube_ten = RubikCube(self, '3', "./models/misc/RubikCube")
         #8 cube_twn
-        self.cube_twn = RubikCube(self, '3', "models/misc/RubikCube")
+        self.cube_twn = RubikCube(self, '3', "./models/misc/RubikCube")
         #
         # define Edge-Cubes
         # 
         #1 cube_sw
-        self.cube_sw = RubikCube(self, '2', "models/misc/RubikCube")
+        self.cube_sw = RubikCube(self, '2', "./models/misc/RubikCube")
         #2 cube_bs
-        self.cube_bs = RubikCube(self, '2', "models/misc/RubikCube")
+        self.cube_bs = RubikCube(self, '2', "./models/misc/RubikCube")
         #3 cube_se
-        self.cube_se = RubikCube(self, '2', "models/misc/RubikCube")
+        self.cube_se = RubikCube(self, '2', "./models/misc/RubikCube")
         #4 cube-ts
-        self.cube_ts = RubikCube(self, '2', "models/misc/RubikCube")
+        self.cube_ts = RubikCube(self, '2', "./models/misc/RubikCube")
         #5 cube_nw
-        self.cube_nw = RubikCube(self, '2', "models/misc/RubikCube")
+        self.cube_nw = RubikCube(self, '2', "./models/misc/RubikCube")
         #6 cube_bn
-        self.cube_bn = RubikCube(self, '2', "models/misc/RubikCube")
+        self.cube_bn = RubikCube(self, '2', "./models/misc/RubikCube")
         #7 cube_en
-        self.cube_ne = RubikCube(self, '2', "models/misc/RubikCube")
+        self.cube_ne = RubikCube(self, '2', "./models/misc/RubikCube")
         #8 cube-tn
-        self.cube_tn = RubikCube(self, '2', "models/misc/RubikCube")
+        self.cube_tn = RubikCube(self, '2', "./models/misc/RubikCube")
         #9 cube_bw
-        self.cube_bw = RubikCube(self, '2', "models/misc/RubikCube")
+        self.cube_bw = RubikCube(self, '2', "./models/misc/RubikCube")
         #10 cube_be
-        self.cube_be = RubikCube(self, '2', "models/misc/RubikCube")
+        self.cube_be = RubikCube(self, '2', "./models/misc/RubikCube")
         #11 cube-te
-        self.cube_te = RubikCube(self, '2', "models/misc/RubikCube")
+        self.cube_te = RubikCube(self, '2', "./models/misc/RubikCube")
         #12 cube-tw
-        self.cube_tw = RubikCube(self, '2', "models/misc/RubikCube")
+        self.cube_tw = RubikCube(self, '2', "./models/misc/RubikCube")
         #
         # center cubes list
         self.cube1 = [self.cube_s, self.cube_n, self.cube_e, self.cube_w, self.cube_t, self.cube_b]
@@ -150,7 +150,7 @@ class RubikGame(ShowBase):
         #dir_light.setSpecularColor((1, 1, 1, 1))
         light = self.render.attachNewNode(dir_light)
         #
-        font = self.loader.loadFont("fonts\msgothic.ttc")      
+        font = self.loader.loadFont("./fonts/msgothic.ttc")      
         #  
         #
         # CLI command input-line
