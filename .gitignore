@@ -3,3 +3,8 @@ lesson/
 log/
 panda3d/samples/
 reg/
+*.pyc
+panda3d/src/game.py
+panda3d/src/RubikGame_.py
+panda3d/src/RubikGame__.py
+panda3d/src/sample1.py
