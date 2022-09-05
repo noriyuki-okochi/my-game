@@ -2,7 +2,7 @@ import sys
 import time
 import math
 import random
-from turtle import color, position
+#from turtle import color, position
 from panda3d.core import WindowProperties
 from panda3d.core import TextNode
 from panda3d.core import DirectionalLight
