@@ -361,7 +361,10 @@ class RubikGame(ShowBase):
             #self.write_opelog(f"dt:{dt}")
             if dt != self.preDt:
                 self.preDt = dt
-                self.readf_next()
+                if self.readf_next() == None:
+                    self.cli.prompt('')
+                else:
+                    self.cli.prompt('...executing...')
         return task.cont
     #
     # call-back func. on radio-bottom click
@@ -670,6 +673,7 @@ class RubikGame(ShowBase):
                 self.read_fd = None
                 self.read_count = 0
             self.cli.clrPrompt()
+            self.cli.clear()
         if self.ope_mode[0] == RubikGame.SET_MODE:
             if self.cmdfileSetting or self.cmdKeyinSetting:
                 self.cmdfileSetting = False
@@ -715,8 +719,8 @@ class RubikGame(ShowBase):
                 try:
                     self.read_fd = open(self.cmdfile, mode='r')
                 except:
-                    print(f"{self.cmdfile}.reg not found.")
-                    self.cli.prompt(f">ファイル({self.cmdfile}.reg)がありません。\n"\
+                    print(f"{self.cmdfile} not found.")
+                    self.cli.prompt(f">ファイル({self.cmdfile})がありません。\n"\
                                     " escキーで中断してください。")
                 else:
                     self.readf_next()
@@ -865,7 +869,12 @@ class RubikGame(ShowBase):
     def space_key(self):
         if self.ope_mode[0] == RubikGame.PLAY_MODE:
             if self.read_fd != None:
-                self.readf_next()
+                if self.readf_next() == None:
+                    self.cli.prompt('')
+                else:
+                    self.cli.prompt(">spaceキーで次行のコマンドを実行します。\n"\
+                                    " ctrl-aキーで最終行まで実行します。\n"\
+                                    " escキーで中断します。")
         else:
             self.cli.input(' ')
         return
