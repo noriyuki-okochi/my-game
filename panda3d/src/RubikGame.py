@@ -524,10 +524,12 @@ class RubikGame(ShowBase):
     #
     def reset_camera(self):
         if self.ope_mode[0] == RubikGame.PLAY_MODE:
-            self.camera_rz = math.radians(0)    # 0:horizontal -> 90:top
-            self.camera_rx = math.radians(270)  # 0:right -> 90:back -> 180:left ->270(front)
+            #self.camera_rz = math.radians(0)    # 0:horizontal -> 90:top
+            #self.camera_rx = math.radians(270)  # 0:right -> 90:back -> 180:left ->270(front)
             #self.camera_rz = math.radians(-90)   # -90:bottom 
             #self.camera_rx = math.radians(90)    #  90:back
+            self.camera_rz = math.radians(45)     # 45:up 
+            self.camera_rx = math.radians(315)    # 45:right
             self.camera_d = 20                   # distance
             self.move_camera()
         return
