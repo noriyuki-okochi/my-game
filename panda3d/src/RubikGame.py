@@ -28,8 +28,11 @@ class RubikGame(ShowBase):
         #ShowBase.__init__(self)
         super().__init__(self)
         # defalut settinge value
-        #    ['cmdfile-name', {0:don't auto-reg.|1:aoto-reg.}]
-        self.setting = ["./dat/cmdfile", '1']
+        #    ['cmdfile-name', 
+        #     {0:don't auto-reg.|1:aoto-reg.}
+        #     {0:don't auto-search|1:aoto-search}
+        #    ]
+        self.setting = ["./dat/cmdfile", '1', '1']
         # serialized-file
         self.settingfile = "./reg/setting.reg"
         # log-file
@@ -167,35 +170,34 @@ class RubikGame(ShowBase):
         #
         # cube's face rotate-ope. command guidance
         # 
-        guid_text =" s:Green   -   n:Blue\n"\
-                   " e:Orange  -   w:Red\n"\
-                   " t:Yellow  -   b:White\n"\
-                   " +:Right       -:Left\n"\
-                   " y:Y-ex z:Z-ex v:Inter {<|>}:Around\n\n"\
+        guid_text =" south/north/east/west/top/bottom\n"\
+                   " Green/Blue/Orange/Red/Yellow/White\n\n"\
+                   " +:Right -:Left\n"\
+                   " y:Y-ex  z:Z-ex v:Inter {<|>}:Around\n\n"\
                    " u:Undo last cmd.\n"\
                    " ctrl+z:Cancel un-confirmed cmd.\n"\
                    " enter:Confirm(save cmd. and clear)\n"\
                    " escape:Suspend current sequence."    
         self.guidance1 = OnscreenText(text = guid_text,
                    parent=self.a2dTopLeft, align=TextNode.ALeft,
-                   fg=(1, 1, 1, 1), pos=(1.6, -0.1), 
+                   fg=(1, 1, 1, 1), pos=(1.5, -0.1), 
                    scale=0.06, font=font,
                    shadow=(0, 0, 0, 0.5))
         #
         # cammera's position move-ope. command guidance
         # 
         guid_text = " →←↑↓: Move camera\n"\
-                    " home: Home position\n"\
-                    " r:Reverse  pg-up:Up-side-down"
+                    " home    : Home position\n"\
+                    " o:Opposit  pg-up:UpSideDown"
         self.guidance2 = OnscreenText(text = guid_text,
                    parent=self.a2dTopLeft, align=TextNode.ALeft,
-                   fg=(1, 1, 1, 1), pos=(0.58, -0.1), 
+                   fg=(1, 1, 1, 1), pos=(0.54, -0.1), 
                    scale=0.06, font=font,
                    shadow=(0, 0, 0, 0.5))
         #
         # game control-ope. command guidance
         # 
-        guid_text = " ctrl+r:Recover position from reg.\n"\
+        guid_text = " ctrl+r:Recover from reg.\n"\
                     " ctrl+s:Start game\n"\
                     " ctrl+f:Read cmd. from file\n"\
                     " ctrl+i:Input cmd. by key\n"\
@@ -203,7 +205,7 @@ class RubikGame(ShowBase):
                     " ctrl+q/e:Quit/Exit(with reg.)\n "
         self.guidance3 = OnscreenText(text = guid_text,
                    parent=self.a2dTopLeft, align=TextNode.ALeft,
-                   fg=(1, 1, 1, 1), pos=(0.58, -0.31), 
+                   fg=(1, 1, 1, 1), pos=(0.54, -0.31), 
                    scale=0.06, font=font,
                    shadow=(0, 0, 0, 0.5))
         #
@@ -248,25 +250,26 @@ class RubikGame(ShowBase):
         self.accept("arrow_left-repeat", self.left_key)
         # reset the camera's position
         self.accept("home", self.reset_camera)
-        self.accept("r", self.reverse_camera)
+        self.accept("o", self.opposit_camera)
+        # turn the rubic-cube upside down
         self.accept("page_up", self.upside_down)
-
         # set all cube to initial position( restart game)
         self.accept("control-s", self.re_start)
 
-        # select the face(t/b/s/n/e/w or Yellow/Wite/Green/Blue/Orange/Red)
+        # select a face(t/b/s/n/e/w) relatively
         self.accept("t", self.top_face)
-        self.accept("shift-y", self.top_face)
         self.accept("b", self.bottom_face)
-        self.accept("shift-w", self.bottom_face)
         self.accept("s", self.south_face)
-        self.accept("shift-g", self.south_face)
         self.accept("n", self.north_face)
-        self.accept("shift-b", self.north_face)
         self.accept("e", self.east_face)
-        self.accept("shift-o", self.east_face)
         self.accept("w", self.west_face)
-        self.accept("shift-r", self.west_face)
+        # select a face(Yellow/Wite/Green/Blue/Orange/Red) absolutly
+        self.accept("shift-y", self.yellow_face)
+        self.accept("shift-w", self.white_face)
+        self.accept("shift-g", self.green_face)
+        self.accept("shift-b", self.blue_face)
+        self.accept("shift-o", self.orange_face)
+        self.accept("shift-r", self.red_face)
         # rotate the selected face 
         self.accept(";", self.right_char)
         self.accept("-", self.left_char)
@@ -307,15 +310,18 @@ class RubikGame(ShowBase):
         self.accept("j", self.j_key)
         self.accept("k", self.k_key)
         self.accept("l", self.l_key)
-
         self.accept("m", self.m_key)
-        self.accept("o", self.o_key)
+        self.accept("r", self.r_key)
         self.accept("p", self.p_key)
         self.accept("q", self.q_key)
         self.accept("v", self.v_key)
         self.accept("x", self.x_key)
         self.accept("y", self.y_key)
         self.accept("z", self.z_key)
+        self.accept("shift-s", self.upper_s)
+        self.accept("shift-e", self.upper_e)
+        self.accept("shift-n", self.upper_n)
+        self.accept("shift-t", self.upper_t)
         self.accept(".", self.dot_key)
         self.accept(",", self.comma_key)
         self.accept("/", self.slash_key)
@@ -395,6 +401,7 @@ class RubikGame(ShowBase):
     def set_menu_text(self, reg = False):
         menu_text = f"1.cmd. file name(str) : {self.setting[0]}\n"\
                     f"2.auto reg.[N=0/Y=1]  : {self.setting[1]}\n"\
+                    f"3.auto search[N=0/Y=1]: {self.setting[2]}\n"\
                     f"0.quit\n"
         self.menu.setText(menu_text)
         if reg:
@@ -534,16 +541,16 @@ class RubikGame(ShowBase):
             self.move_camera()
         return
     #
-    # 'r':reverse position
+    # 'o':opposit position
     #
-    def reverse_camera(self):
+    def opposit_camera(self):
         if self.ope_mode[0] == RubikGame.PLAY_MODE:
             self.camera_rz += math.radians(180) # 0:horizontal -> 90:top
             self.camera_rx += math.radians(180) # 0:right -> 90:back -> 180:left ->270(front)
             self.camera_d = 20                  # distance
             self.move_camera()
         else:
-            self.cli.input('r')
+            self.cli.input('o')
         return
     #
     def upside_down(self):
@@ -574,62 +581,95 @@ class RubikGame(ShowBase):
             self.camera_rx -= math.radians(5)
             self.move_camera()
     #
-    # e/w/s/n/t/b:select a face 
+    # e/w/s/n/t/b:select a face relatively 
     #
-    def top_face(self):
+    def top_face(self, key = 't'):
         if self.ope_mode[0] == RubikGame.PLAY_MODE:
-            self.selected_face = 't'
+            self.selected_face = key
             if len(self.subBuffer) > 0:
-                self.subBuffer.append('t')
+                self.subBuffer.append(key)
         else:
-            #self.cli.input('t')
-            self.cli.input('t')
+            self.cli.input(key)
         return
-    def bottom_face(self):
+    def bottom_face(self, key = 'b'):
         if self.ope_mode[0] == RubikGame.PLAY_MODE:
-            self.selected_face = 'b'
+            self.selected_face = key
             if len(self.subBuffer) > 0:
-                self.subBuffer.append('b')
+                self.subBuffer.append(key)
         else:
-            #self.cli.input('b')
-            self.cli.input('b')
+            self.cli.input(key)
         return
-    def south_face(self):
+    def south_face(self, key = 's'):
         if self.ope_mode[0] == RubikGame.PLAY_MODE:
-            self.selected_face = 's'
+            self.selected_face = key
             if len(self.subBuffer) > 0:
-                self.subBuffer.append('s')
+                self.subBuffer.append(key)
         else:
-            #self.cli.input('s')
-            self.cli.input('s')
+            self.cli.input(key)
         return
-    def north_face(self):
+    def north_face(self, key = 'n'):
         if self.ope_mode[0] == RubikGame.PLAY_MODE:
-            self.selected_face = 'n'
+            self.selected_face = key
             if len(self.subBuffer) > 0:
-                self.subBuffer.append('n')
+                self.subBuffer.append(key)
         else:
-            #self.cli.input('n')
-            self.cli.input('n')
+            self.cli.input(key)
         return
-    def east_face(self):
+    def east_face(self, key = 'e'):
         if self.ope_mode[0] == RubikGame.PLAY_MODE:
-            self.selected_face = 'e'
+            self.selected_face = key
             if len(self.subBuffer) > 0:
-                self.subBuffer.append('e')
+                self.subBuffer.append(key)
         else:
-            #self.cli.input('e')
-            self.cli.input('e')
+            self.cli.input(key)
         return
-    def west_face(self):
+    def west_face(self, key = 'w'):
         if self.ope_mode[0] == RubikGame.PLAY_MODE:
-            self.selected_face = 'w'
+            self.selected_face = key
             if len(self.subBuffer) > 0:
-                self.subBuffer.append('w')
+                self.subBuffer.append(key)
         else:
-            self.cli.input('w')
+            self.cli.input(key)
         return
-
+    #
+    # O/R/G/B/Y/W:select a face absolutely 
+    #
+    def orange_face(self):
+        if self.ope_mode[0] == RubikGame.PLAY_MODE:
+            self.east_face('E')
+        else:
+            self.cli.input('O')
+        return
+    def red_face(self):
+        if self.ope_mode[0] == RubikGame.PLAY_MODE:
+            self.west_face('W')
+        else:
+            self.cli.input('R')
+        return
+    def green_face(self):
+        if self.ope_mode[0] == RubikGame.PLAY_MODE:
+            self.south_face('S')
+        else:
+            self.cli.input('G')
+        return
+    def blue_face(self):
+        if self.ope_mode[0] == RubikGame.PLAY_MODE:
+            self.north_face('N')
+        else:
+            self.cli.input('B')
+        return
+    def yellow_face(self):
+        if self.ope_mode[0] == RubikGame.PLAY_MODE:
+            self.top_face('T')
+        else:
+            self.cli.input('Y')
+        return
+    def white_face(self):
+        if self.ope_mode[0] == RubikGame.PLAY_MODE:
+            self.bottom_face('B')
+        else:
+            self.cli.input('W')
+        return
     #
     # event handler of key-press for rotate the face selected
     # 
@@ -700,13 +740,15 @@ class RubikGame(ShowBase):
                 self.cmdline.setText(cmdline)
                 self.cli.clear()
             # regist current cube's attr(conf,pos)
-            if self.setting[1] == '1':
+            if self.setting[1] == '1': # auto-reg.
                 self.regCubeAttr(self.cube2, './reg/cube2')
                 self.regCubeAttr(self.cube3, './reg/cube3')
                 
                 self.regfile = f"{time.strftime('%Y%m%d%H%M%S')}"
                 self.regCubeAttr(self.cube2+self.cube3, f"./reg/{self.regfile}")
                 self.write_opelog(f"regCubeID:{self.regfile}")
+            if self.setting[2] == '1': # auto-search
+                self.pattern_search(1)
         else:
             if self.cmdfileSetting:
                 # after selection of command-file
@@ -930,15 +972,27 @@ class RubikGame(ShowBase):
     def m_key(self):
         if self.ope_mode[0] != RubikGame.PLAY_MODE:
             self.cli.input('m')
-    def o_key(self):
+    def r_key(self):
         if self.ope_mode[0] != RubikGame.PLAY_MODE:
-            self.cli.input('o')
+            self.cli.input('r')
     def p_key(self):
         if self.ope_mode[0] != RubikGame.PLAY_MODE:
             self.cli.input('p')
     def q_key(self):
         if self.ope_mode[0] != RubikGame.PLAY_MODE:
             self.cli.input('q')
+    def upper_s(self):
+        if self.ope_mode[0] != RubikGame.PLAY_MODE:
+            self.cli.input('S')
+    def upper_e(self):
+        if self.ope_mode[0] != RubikGame.PLAY_MODE:
+            self.cli.input('E')
+    def upper_n(self):
+        if self.ope_mode[0] != RubikGame.PLAY_MODE:
+            self.cli.input('N')
+    def upper_t(self):
+        if self.ope_mode[0] != RubikGame.PLAY_MODE:
+            self.cli.input('T')
     def v_key(self):
         if self.ope_mode[0] != RubikGame.PLAY_MODE:
             self.cli.input('v')
@@ -1009,7 +1063,6 @@ class RubikGame(ShowBase):
     def num0_key(self):
         if self.ope_mode[0] != RubikGame.PLAY_MODE:
             self.cli.input('0')
-
     #
     # ctrl+s:start game
     #
@@ -1186,9 +1239,10 @@ class RubikGame(ShowBase):
         return
     #
     # excetue commands in command-line
-    #    {<face-id><direction>}...
+    #    {<face-id>[<seq-ope>][<face-id>]<direction>}...
     #       <face-id>  ::{'t'|'b'|'s'|'n'|'e'|'w'}
-    #       <direction>::{'+'|'-'|'y'|'z'|'v'|'>'|'<'}
+    #       <seq-ope>::{'y'|'z'|'v'|'>'|'<'}
+    #       <direction>::{'+'|'-'}
     #
     def do_cmdline(self, cmdline):
         print(f"do_cmdline:{cmdline}")
@@ -1368,16 +1422,65 @@ class RubikGame(ShowBase):
                 self.left_rotate()
         return
     #
+    # convert relative face-symbole to absolute face-symbol.
+    #
+    def rel2abs(self, face):
+        rel_south  = ['e', 'n', 'w', 's']
+        abs_faceN  = ['s', 'e', 'n', 'w', 's', 'e', 'n', 'w']
+        abs_faceR  = ['n', 'e', 's', 'w', 'n', 'e', 's', 'w']
+        
+        # specified face-symbol absolutely
+        if face.isupper():
+            # convert to  lower case  
+            return face.lower()
+        #
+        # convert top/bottom face-symbol
+        #
+        if face == 't' or face == 'b':
+            if self.upsideDownFlag:
+                # swap the symbol of top and bottom
+                if face == 't':
+                    face = 'b'
+                else:
+                    face = 't'
+            return face
+        #
+        # serach the relative symbol of face on south
+        #
+        rx = self.camera_rx
+        if self.camera_rx < 0.0:
+            rx = 2*math.pi - abs(self.camera_rx)%(2*math.pi) 
+        #
+        idx_south = int((rx/(math.pi/2))%4)
+        rel_sym = rel_south[idx_south]
+        #print(f"south:{rel_sym}[{idx_south}]")
+        #
+        # convert the relative specified face-symbol to the absolute face-symbol 
+        #
+        rel_face = abs_faceN
+        idx_south = rel_face.index(rel_sym) # index of relative symbol on south
+        idx_face = rel_face.index(face)     # index of specified face  
+        #
+        idx = idx_face + idx_south
+        if not self.upsideDownFlag:
+            abs_face = abs_faceN
+        else:
+            abs_face = abs_faceR
+        #print(f"{rel_sym}[{idx_south}]:{face}[{idx_face}] -> {abs_face[idx]}[{idx}]")
+        return abs_face[idx]
+    #
     #  execute right-rotate selected face
     #
     def right_rotate(self, undo = False): #'+(;)'
         #print(f"right_rotate!! selected face:{self.selected_face}")
         if self.selected_face != None:
-            self.rotate_face(self.selected_face, 'r')
+            # convert relative symbol(low-case) to absolute symbol
+            selected_face = self.rel2abs(self.selected_face)
+            self.rotate_face(selected_face, 'r')
             if undo == False:
                 self.undoPos = None
             #
-            self.cmdBuffer.append(f"{self.selected_face}+")
+            self.cmdBuffer.append(f"{selected_face.upper()}+")
             cmdline = '操作ログ：'
             for cmd in self.cmdBuffer:
                 cmdline += cmd
@@ -1395,11 +1498,13 @@ class RubikGame(ShowBase):
     def left_rotate(self, undo = False): #'-'
         #print(f"left_rotate!! selected face:{self.selected_face}")
         if self.selected_face != None:
-            self.rotate_face(self.selected_face, 'l')
+            # convert relative symbol(low-case) to absolute symbol
+            selected_face = self.rel2abs(self.selected_face)
+            self.rotate_face(selected_face, 'l')
             if undo == False:
                 self.undoPos = None
             #
-            self.cmdBuffer.append(f"{self.selected_face}-")
+            self.cmdBuffer.append(f"{selected_face.upper()}-")
             cmdline = '操作ログ：'
             for cmd in self.cmdBuffer:
                 cmdline += cmd
@@ -2034,7 +2139,7 @@ class RubikGame(ShowBase):
     #
     # search record from 'pattern'  table with current cube's pattern.
     #
-    def pattern_search(self):
+    def pattern_search(self, opt = 2):
         pos_data = ''
         col_data = ''
         for cube in self.cube2:
@@ -2051,9 +2156,11 @@ class RubikGame(ShowBase):
         #
         pt_id = self.db.search_pattern(cube2_attr, cube3_attr)
         if pt_id == None:
-           self.cli.prompt(f">現在のパターンに一致するデータは見つかりませんでした。")
+            if opt > 1:
+                self.cli.prompt(f">現在のパターンに一致するデータは見つかりませんでした。")
         else:
-           self.cli.prompt(f">現在のパターンに一致するデータが見つかりました。[pt_id={pt_id}]")
+            if opt > 0:
+                self.cli.prompt(f">現在のパターンに一致するデータが見つかりました。[pt_id={pt_id}]")
         return pt_id
     #
     # search record from 'pattern'  table by pt_id and view rubik-cubes.
@@ -2112,9 +2219,9 @@ class RubikGame(ShowBase):
                 self.confirm()
                 self.ope_mode[0] = RubikGame.SET_MODE
            self.cli.prompt(f">指定パターンの解法を操作ログに表示します。[pt_id={pt_id},sl_no={sl_no}]")
-           self.cmdBuffer.append(cmd)
+           self.cmdBuffer.append(cmd.upper())
            cmdline = '操作ログ：'
-           cmdline += cmd
+           cmdline += cmd.upper()
            self.cmdline.setText(cmdline)
         return
     # end of the definition of RubikGame-Class
