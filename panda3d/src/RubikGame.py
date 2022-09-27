@@ -1,4 +1,5 @@
 import sys
+import os
 import time
 import math
 import random
@@ -39,6 +40,7 @@ class RubikGame(ShowBase):
         self.logfile = f"./log/logfile_{time.strftime('%Y%m%d')}"
         # command-file
         self.cmdfile = f"{self.setting[1]}" 
+        self.tempfile = None
         self.cmdfileSetting = False
         self.read_fd = None
         self.read_count = 0
@@ -171,9 +173,10 @@ class RubikGame(ShowBase):
         # cube's face rotate-ope. command guidance
         # 
         guid_text =" south/north/east/west/top/bottom\n"\
-                   " Green/Blue/Orange/Red/Yellow/White\n\n"\
+                   " Green/Blue/Orange/Red/Yellow/White\n"\
+                   " ctrl+u:switch rel.<->abs. mode\n\n"\
                    " +:Right -:Left\n"\
-                   " y:Y-ex  z:Z-ex v:Inter {<|>}:Around\n\n"\
+                   " y:Y-ex  z:Z-ex v:Inter {<|>}:Around\n"\
                    " u:Undo last cmd.\n"\
                    " ctrl+z:Cancel un-confirmed cmd.\n"\
                    " enter:Confirm(save cmd. and clear)\n"\
@@ -197,8 +200,8 @@ class RubikGame(ShowBase):
         #
         # game control-ope. command guidance
         # 
-        guid_text = " ctrl+r:Recover from reg.\n"\
-                    " ctrl+s:Start game\n"\
+        guid_text = " ctrl+s:Start game\n"\
+                    " ctrl+r:Recover from reg.\n"\
                     " ctrl+f:Read cmd. from file\n"\
                     " ctrl+i:Input cmd. by key\n"\
                     " ctrl+c/p:Copy/Past cmd.\n"\
@@ -214,6 +217,15 @@ class RubikGame(ShowBase):
         self.menu = OnscreenText(text = '',
                    parent=self.a2dTopLeft, align=TextNode.ALeft,
                    fg=(0, 1, 1, 1), pos=(0.05, -0.65), 
+                   scale=0.06, font=font,
+                   shadow=(0, 0, 0, 0.5))
+        #
+        # rel.<->abs. mode of key in 's/n/e/w/t/b\n' on playing-mode.
+        self.abs_mode = False
+        self.mode_text = 'REL.'
+        self.guidance_mode = OnscreenText(text = self.mode_text,
+                   parent=self.a2dTopLeft, align=TextNode.ALeft,
+                   fg=(0, 1, 1, 1), bg=(1, 0, 1, 1), pos=(0.05, -0.35), 
                    scale=0.06, font=font,
                    shadow=(0, 0, 0, 0.5))
         #
@@ -279,6 +291,8 @@ class RubikGame(ShowBase):
         self.accept("u", self.undo)
         # save operations in command-line and clear command-line
         self.accept("enter", self.confirm)
+        # switch the abs-mode on key-in 's/n/e/w/t/b' on playing-mode
+        self.accept("control-u", self.switch_absmode)
         # undo all operations in command-line and clear command-line
         self.accept("control-z", self.cancel)
         # read command-line from cmdfile and execute these comannds
@@ -553,6 +567,14 @@ class RubikGame(ShowBase):
             self.cli.input('o')
         return
     #
+    def switch_absmode(self):
+        self.abs_mode = not self.abs_mode
+        if self.abs_mode:
+            self.mode_text = 'ABS.'
+        else:
+            self.mode_text = 'REL.'
+        self.guidance_mode.setText(self.mode_text)
+    #
     def upside_down(self):
         print("upside_down")
         self.upsideDownFlag = (not self.upsideDownFlag)
@@ -585,6 +607,8 @@ class RubikGame(ShowBase):
     #
     def top_face(self, key = 't'):
         if self.ope_mode[0] == RubikGame.PLAY_MODE:
+            if self.abs_mode:
+                key = 'T'
             self.selected_face = key
             if len(self.subBuffer) > 0:
                 self.subBuffer.append(key)
@@ -593,6 +617,8 @@ class RubikGame(ShowBase):
         return
     def bottom_face(self, key = 'b'):
         if self.ope_mode[0] == RubikGame.PLAY_MODE:
+            if self.abs_mode:
+                key = 'B'
             self.selected_face = key
             if len(self.subBuffer) > 0:
                 self.subBuffer.append(key)
@@ -601,6 +627,8 @@ class RubikGame(ShowBase):
         return
     def south_face(self, key = 's'):
         if self.ope_mode[0] == RubikGame.PLAY_MODE:
+            if self.abs_mode:
+                key = 'S'
             self.selected_face = key
             if len(self.subBuffer) > 0:
                 self.subBuffer.append(key)
@@ -609,6 +637,8 @@ class RubikGame(ShowBase):
         return
     def north_face(self, key = 'n'):
         if self.ope_mode[0] == RubikGame.PLAY_MODE:
+            if self.abs_mode:
+                key = 'N'
             self.selected_face = key
             if len(self.subBuffer) > 0:
                 self.subBuffer.append(key)
@@ -617,6 +647,8 @@ class RubikGame(ShowBase):
         return
     def east_face(self, key = 'e'):
         if self.ope_mode[0] == RubikGame.PLAY_MODE:
+            if self.abs_mode:
+                key = 'E'
             self.selected_face = key
             if len(self.subBuffer) > 0:
                 self.subBuffer.append(key)
@@ -625,6 +657,8 @@ class RubikGame(ShowBase):
         return
     def west_face(self, key = 'w'):
         if self.ope_mode[0] == RubikGame.PLAY_MODE:
+            if self.abs_mode:
+                key = 'W'
             self.selected_face = key
             if len(self.subBuffer) > 0:
                 self.subBuffer.append(key)
@@ -632,7 +666,7 @@ class RubikGame(ShowBase):
             self.cli.input(key)
         return
     #
-    # O/R/G/B/Y/W:select a face absolutely 
+    # O/R/G/B/Y/W:select a face with color absolutely  
     #
     def orange_face(self):
         if self.ope_mode[0] == RubikGame.PLAY_MODE:
@@ -713,6 +747,9 @@ class RubikGame(ShowBase):
             if self.read_fd != None:
                 self.read_fd.close()
                 self.read_fd = None
+                if self.tempfile != None:
+                    os.remove(self.tempfile)
+                    self.tempfile = None
                 self.read_count = 0
             self.cli.clrPrompt()
             self.cli.clear()
@@ -1195,6 +1232,10 @@ class RubikGame(ShowBase):
             self.read_fd.close()
             self.read_fd = None
             self.read_count = 0
+            if self.tempfile != None:
+                os.remove(self.tempfile)
+                self.tempfile = None
+            #
             if self.autoStart:
                 print(f"auto start stopped.")
                 self.write_opelog(f"auto start stopped.")
@@ -2211,27 +2252,69 @@ class RubikGame(ShowBase):
     #
     def pattern_get(self, params):
         print(f"pattern_get:{params}")
+        #
+        opt_flg = True
+        try:
+            params.remove('-e')
+        except:
+            opt_flg = False
+        #    
         if len(params) == 1:
+            # search the current pattern-id from db.
             pt_id = self.pattern_search()
             if pt_id == None:
                 return
         else:
             pt_id = params[1]
+        #
+        # search the solution from db with pattern-id
+        #  
         cmd,  sl_no = self.db.get_solution(pt_id)
         if cmd == None:
            self.cli.prompt(f">指定パターンの解法は見つかりませんでした。")
         else:
-           if len(self.cmdBuffer) > 0:
+            if len(self.cmdBuffer) > 0:
                 self.ope_mode[0] = RubikGame.PLAY_MODE
                 self.confirm()
                 self.ope_mode[0] = RubikGame.SET_MODE
-           self.cli.prompt(f">指定パターンの解法を操作ログに表示します。[pt_id={pt_id},sl_no={sl_no}]")
-           self.cmdBuffer.append(cmd.upper())
-           cmdline = '操作ログ：'
-           cmdline += cmd.upper()
-           self.cmdline.setText(cmdline)
+            self.cli.prompt(f">指定パターンの解法を操作ログに表示します。[pt_id={pt_id},sl_no={sl_no}]")
+            self.cmdBuffer.append(cmd.upper())
+            cmdline = '操作ログ：'
+            cmdline += cmd.upper()
+            self.cmdline.setText(cmdline)
+            #
+            if opt_flg:
+                # execute the operation with the searched solution 
+                self.exec_solution(cmd)
         return
+    #
+    def exec_solution(self, cmdline):
+            # create temp comand-file.
+            tempname = f"temp{time.strftime('%Y%m%d')}"
+            self.tempfile = self.setting[0].replace('cmdfile', tempname)
+            try:
+                with open(self.tempfile, mode='w+t') as fd:
+                    idx = 0
+                    while idx < len(cmdline):
+                        fd.write( cmdline[idx:idx+2] + '\n')
+                        idx += 2
+            except:
+                print(f"{self.tempfile} can not be created.")
+                return
+            fd.close()
+            #
+            # execute cmd-file.
+            #
+            self.ope_mode[0] = RubikGame.PLAY_MODE
+            self.read_fd = open(self.tempfile, mode='r')
+            self.readf_next()
+            self.cli.prompt(">spaceキーで次行のコマンドを実行します。\n"\
+                            " ctrl-aキーで最終行まで実行します。\n"\
+                            " escキーで中断します。")
+            return
+    #
     # end of the definition of RubikGame-Class
+    #
 #
 # Main process
 #
