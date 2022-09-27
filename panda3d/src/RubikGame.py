@@ -1877,11 +1877,18 @@ class RubikGame(ShowBase):
     #
     def is_completed(self, cube_list):
         fname = './reg/completed'
+        fnameA = './reg/completeda'
         try:
             with open(f"{fname}.reg", 'rb') as fd:
                 ld_attrs = pickle.load(fd)
         except:
             print(f"{fname}.reg not found.")
+            return
+        try:
+            with open(f"{fnameA}.reg", 'rb') as fd:
+                ld_attrsA = pickle.load(fd)
+        except:
+            print(f"{fnameA}.reg not found.")
             return
         #
         cur_attrs = []
@@ -1890,7 +1897,7 @@ class RubikGame(ShowBase):
                     'pos':cube.getPos()}
             cur_attrs.append(attr)
         #
-        return ld_attrs == cur_attrs 
+        return (ld_attrs == cur_attrs) or (ld_attrsA == cur_attrs) 
     #
     # convert edge cube's-pos to db-item(pos)
     #
@@ -2196,7 +2203,7 @@ class RubikGame(ShowBase):
             cube.setConf(cube3_attrs[i].get('conf'))
             i += 1
         #
-        self.cli.prompt(f">パターンID={pt_id}。（n:next/q:quit）")
+        self.cli.prompt(f">パターンID={pt_id}。（enter:next/q:quit）")
         self.pattern_viewing = True
         return 
     #
