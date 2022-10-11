@@ -17,6 +17,7 @@ from direct.gui.DirectGui import *
 
 from rubikcube.rubikcube import RubikCube
 from mycli.mycli import MyCli
+from laptime.laptime import LapTime
 import pickle
 from mysqlite3.mysqlite3 import MyDb
 
@@ -28,6 +29,8 @@ class RubikGame(ShowBase):
     def __init__(self):
         #ShowBase.__init__(self)
         super().__init__(self)
+        #
+        self.initial_start = True
         # defalut settinge value
         #    ['cmdfile-name', 
         #     {0:don't auto-reg.|1:aoto-reg.}
@@ -221,11 +224,21 @@ class RubikGame(ShowBase):
                    shadow=(0, 0, 0, 0.5))
         #
         # rel.<->abs. mode of key in 's/n/e/w/t/b\n' on playing-mode.
+        #
         self.abs_mode = False
         self.mode_text = 'REL.'
         self.guidance_mode = OnscreenText(text = self.mode_text,
                    parent=self.a2dTopLeft, align=TextNode.ALeft,
                    fg=(0, 1, 1, 1), bg=(1, 0, 1, 1), pos=(0.05, -0.35), 
+                   scale=0.06, font=font,
+                   shadow=(0, 0, 0, 0.5))
+        # 
+        # display lap-time.
+        #
+        self.laptime = LapTime()
+        self.lap_time = OnscreenText(text=self.laptime.strlaptime(),
+                   parent=self.a2dTopLeft, align=TextNode.ALeft,
+                   fg=(1, 1, 1, 1), bg=(1, 0, 1, 1), pos=(2.4, -1.96), 
                    scale=0.06, font=font,
                    shadow=(0, 0, 0, 0.5))
         #
@@ -371,6 +384,14 @@ class RubikGame(ShowBase):
         # set the initial position of all cubes 
         #
         self.set_initial_cube()
+        #
+    #
+    #   Task to display the lap-time every second under palying this game.
+    #
+    def updateTask(self, task):
+        if self.laptime.enabled and self.laptime.interval(1):
+            self.lap_time.setText(self.laptime.strlaptime())
+        return task.cont
     #
     #  Task to execute rotatinon command  with timer
     #     
@@ -393,11 +414,17 @@ class RubikGame(ShowBase):
         self.cur_mode = RubikGame.PLAY_MODE
         self.menu.setText('')
         self.cli.clear()
+        #
+        if not self.initial_start:
+            self.laptime.restart()
+        self.initial_start = False
     #    
     def on_setting(self):
         self.cur_mode = RubikGame.SET_MODE
         self.set_help_text()
         self.cli.start()
+        #
+        self.laptime.pause()
     #
     # display CLI command guidance
     #
@@ -738,9 +765,13 @@ class RubikGame(ShowBase):
             self.undoPos = None
             if self.restartFlag == True:
                 self.restartFlag = False
+                print(f"\laptime_update suspended")
+                self.taskMgr.remove("laptime_update")
+                self.laptime.clear()
+                self.lap_time.setText(self.laptime.strlaptime())
             if self.autoStart:
-                print(f"\nauto start suspended")
-                self.write_opelog('auto start suspended')
+                print(f"\nauto-start suspended")
+                self.write_opelog('auto-start suspended')
                 self.taskMgr.remove("autoTask")
                 self.autoStart = False
                 self.preDt = 0
@@ -1168,7 +1199,7 @@ class RubikGame(ShowBase):
                     self.set_help_text()
                     self.cli.clrPrompt()
                     self.ope_mode[0] = RubikGame.SET_MODE
-                elif num <= 2:
+                elif num <= len(self.setting):
                     self.setting[num - 1] = params[0]
                     print(f"setting:{self.setting}")
                     self.cmdfile = f"{self.setting[0]}" 
@@ -1227,21 +1258,25 @@ class RubikGame(ShowBase):
             self.read_count += 1
         #
         if line == '':  # end of file
-            print(f"\nread_file eof:{self.cmdfile}")
-            self.write_opelog(f"read_file eof:{self.cmdfile}")
             self.read_fd.close()
             self.read_fd = None
             self.read_count = 0
             if self.tempfile != None:
+                cmdfile = self.tempfile
                 os.remove(self.tempfile)
                 self.tempfile = None
+            else:
+                cmdfile = self.cmdfile
+            #
+            print(f"\nread_file eof:{cmdfile}")
+            self.write_opelog(f"read_file eof:{cmdfile}")
             #
             if self.autoStart:
                 print(f"auto start stopped.")
                 self.write_opelog(f"auto start stopped.")
                 # stop autoTask
                 self.taskMgr.remove("autoTask")
-                self.autoStrt = False
+                self.autoStart = False
                 self.preDt = 0
                 self.cli.clear()
         return self.read_fd
@@ -1344,6 +1379,10 @@ class RubikGame(ShowBase):
         # excecute these commands
         self.do_command(cmdbuf)
         self.cli.prompt('>enterキーを押して開始します。')
+        # start to display lap-time
+        self.taskMgr.add(self.updateTask, "laptime_update")
+        self.laptime.start()
+        #
         self.restartFlag = False
         return
 
@@ -1528,10 +1567,14 @@ class RubikGame(ShowBase):
             self.cmdline.setText(cmdline)
         #
         if self.is_completed(self.cube2+self.cube3):
-            print('completed now!!')
+            print(f"completed now!!(time={self.laptime.strlatime()}")
             # save cmdBuffer to log-file
             self.confirm()
-            self.write_opelog('completed now!!')
+            self.write_opelog(f"completed now!!(time={self.laptime.strlatime()}")
+            # stop to update lap-time
+            if self.laptime.enabled():
+                self.taskMgr.remove("laptime_update")
+                self.laptime.clear()
         return
     #
     #  execute left-rotate selected face
@@ -1552,9 +1595,14 @@ class RubikGame(ShowBase):
             self.cmdline.setText(cmdline)
         #
         if self.is_completed(self.cube2+self.cube3):
-            print('completed now!!')
+            print(f"completed now!!(time={self.laptime.strlaptime()})")
             self.confirm()
-            self.write_opelog('completed now!!')
+            self.write_opelog(f"completed now!!(time={self.laptime.strlaptime()})")
+            # stop to update lap-time
+            if self.laptime.enabled():
+                self.taskMgr.remove("laptime_update")
+                self.laptime.clear()
+
         return
     #
     # execute face-rotation process
