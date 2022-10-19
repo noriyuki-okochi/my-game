@@ -61,6 +61,14 @@ class MyDb:
     #
     def close(self):
         self.conn.close()
+        self.conn = None
+    #
+    # re-connect database
+    #
+    def reopen(self):
+        if self.conn != None:
+            self.conn.close()
+        self.conn = sqlite3.connect(self.dbpath)
     #
     # entry cube's pattern to pattern-table
     #
