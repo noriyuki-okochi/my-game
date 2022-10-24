@@ -1,5 +1,7 @@
 drop table if exists pattern;
-create table if not exists pattern( pt_id text NOT NULL,
+create table if not exists pattern( pt_id text NOT NULL, 
+                                    pos1 text NOT NULL,
+                                    col1 text NOT NULL,
                                     pos2 text NOT NULL,
                                     col2 text NOT NULL,
                                     pos3 text NOT NULL,
