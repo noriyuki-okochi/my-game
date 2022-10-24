@@ -72,14 +72,17 @@ class MyDb:
     #
     # entry cube's pattern to pattern-table
     #
-    def insert_pattern(self, pt_id, cube2, cube3):
+    def insert_pattern(self, pt_id, cube1, cube2, cube3):
         sql = "select pt_id from pattern where "\
+            + f"pos1='{cube1[0]}' and col1='{cube1[1]}' and "\
             + f"pos2='{cube2[0]}' and col2='{cube2[1]}' and "\
             + f"pos3='{cube3[0]}' and col3='{cube3[1]}'"
         rs = self.query(sql).fetchone()
         if rs == None:
-            sql = "insert into pattern(pt_id,pos2,col2,pos3,col3) values("\
+            sql = "insert into pattern(pt_id,pos1,col1,pos2,col2,pos3,col3) values("\
                 + f"'{pt_id}',"\
+                + f"'{cube1[0]}',"\
+                + f"'{cube1[1]}',"\
                 + f"'{cube2[0]}',"\
                 + f"'{cube2[1]}',"\
                 + f"'{cube3[0]}',"\
@@ -133,8 +136,9 @@ class MyDb:
     #
     # search pattern-table by current cube's attr.
     #
-    def search_pattern(self, cube2, cube3):
+    def search_pattern(self, cube1, cube2, cube3):
         sql = "select pt_id from pattern where "\
+            + f"pos1='{cube1[0]}' and col1='{cube1[1]}' and "\
             + f"pos2='{cube2[0]}' and col2='{cube2[1]}' and "\
             + f"pos3='{cube3[0]}' and col3='{cube3[1]}'"
         #print(f"sql:{sql}")
@@ -148,18 +152,20 @@ class MyDb:
     # get pattern by pt_id.
     #
     def get_pattern(self, pt_id):
-        sql = "select pt_id,pos2,col2,pos3,col3 from pattern where "\
+        sql = "select pt_id,pos1,col1,pos2,col2,pos3,col3 from pattern where "\
             + f"pt_id LIKE '%{pt_id}%' ORDER BY inserted_at ASC"
         rs = self.query(sql).fetchone()
         if rs == None:
             pt_id = None
+            cube1 = None
             cube2 = None
             cube3 = None
         else:
             pt_id = rs['pt_id']
+            cube1 = (rs['pos1'],rs['col1'])
             cube2 = (rs['pos2'],rs['col2'])
             cube3 = (rs['pos3'],rs['col3'])
-        return pt_id,cube2,cube3
+        return pt_id,cube1,cube2,cube3
     #
     # get next pattern.
     #
@@ -167,13 +173,15 @@ class MyDb:
         rs = self.fetch_next()
         if rs == None:
             pt_id = None
+            cube1 = None
             cube2 = None
             cube3 = None
         else:
             pt_id = rs['pt_id']
+            cube1 = (rs['pos1'],rs['col1'])
             cube2 = (rs['pos2'],rs['col2'])
             cube3 = (rs['pos3'],rs['col3'])
-        return pt_id,cube2,cube3
+        return pt_id,cube1,cube2,cube3
     #
     # get solution(sl_no=Max) by pt_id.
     #
