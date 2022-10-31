@@ -209,7 +209,7 @@ class RubikCube():
         return
     #
     # rotate cube 180 deg. around the X-axis 
-    # and shift the WTN to origin
+    # and shift the WBS to origin
     #
     def upsideDown(self, unit):
         self.setZ( ((-1)*self.getZ() + unit*2) )
@@ -221,8 +221,23 @@ class RubikCube():
         self.setConf(conf_n)
         return
     #
+    # rotate cube 90 deg. around the X-axis 
+    # and shift the WBS to origin
+    #
+    def upsideFront(self, unit):
+        z = self.getZ()
+        self.setZ( self.getY() )
+        self.setY( (-1)*z + 2*unit)
+        conf = self.getConf()
+        conf_n = ( self.getPairColor(conf[2]),
+                   conf[1], 
+                   conf[0],
+                    )
+        self.setConf(conf_n)
+        return
+    #
     # rotate cube 90 deg. around the Y-axis 
-    # and shift the TWS to origin
+    # and shift the WBS to origin
     #
     def upsideLeft(self, unit):
         z = self.getZ()
