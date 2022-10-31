@@ -57,8 +57,10 @@ class RubikGame(ShowBase):
         self.restartFlag = False
         # current rotation mode of whole cube.  
         self.upsideDownFlag = False     # 180deg. Pitch
+        self.upsideFrontFlag = False     # 90deg.  Roll
         self.upsideLeftFlag = False     # 90deg.  Roll
         self.roll_count = 0             # 0:0/1:90/2:180/3:270
+        self.pitch_count = 0            # 0:0/1:90/2:180/3:270
         # 
         self.selected_face = None
         self.cmdBuffer = [] # display buffer for primitive cmd. 
@@ -182,7 +184,7 @@ class RubikGame(ShowBase):
         guid_text =" south/north/east/west/top/bottom\n"\
                    " Green/Blue/Orange/Red/Yellow/White\n"\
                    " ctrl+m:Switch rel.<->abs. mode\n"\
-                   " pg-up :180-Pitch  scroll:90-Roll\n\n"\
+                   " pg-dn :90-Pitch  scroll:90-Roll\n\n"\
                    " +:Right -:Left\n"\
                    " y:Y-ex  z:Z-ex v:Inter {<|>}:Around\n"\
                    " u:Undo last cmd.\n"\
@@ -282,9 +284,11 @@ class RubikGame(ShowBase):
         # reset the camera's position
         self.accept("home", self.reset_camera)
         self.accept("o", self.opposit_camera)
-        # turn the rubic-cube upside down(180P)
-        self.accept("page_up", self.upside_down)
-        # turn the rubic-cube 90R)
+        # turn the rubik-cube upside down(180P)
+        #self.accept("page_up", self.upside_down)
+        # turn the rubik-cube 90P
+        self.accept("page_down", self.upside_front)
+        # turn the rubik-cube 90R
         self.accept("scroll_lock", self.upside_left)
         # set all cube to initial position( restart game)
         self.accept("control-s", self.re_start)
@@ -480,7 +484,9 @@ class RubikGame(ShowBase):
     #
     def set_initial_cube(self):
         self.upsideDownFlag = False
+        self.upsideFrontFlag = False
         self.upsideLeftFlag = False
+        self.pitch_count = 0
         self.roll_count = 0
         # set Centor-Cubes
         #1 cube_s
@@ -582,7 +588,7 @@ class RubikGame(ShowBase):
     # home:reset the camera's position(front)
     #
     def reset_camera(self):
-        if self.ope_mode[0] == RubikGame.PLAY_MODE:
+        #if self.ope_mode[0] == RubikGame.PLAY_MODE:
             #self.camera_rz = math.radians(0)    # 0:horizontal -> 90:top
             #self.camera_rx = math.radians(270)  # 0:right -> 90:back -> 180:left ->270(front)
             #self.camera_rz = math.radians(-90)   # -90:bottom 
@@ -591,7 +597,7 @@ class RubikGame(ShowBase):
             self.camera_rx = math.radians(315)    # 45:right
             self.camera_d = 20                   # distance
             self.move_camera()
-        return
+        #return
     #
     # 'o':opposit position
     #
@@ -629,10 +635,30 @@ class RubikGame(ShowBase):
         self.mode_text = self.get_nprtext()
         self.guidance_mode.setText(self.mode_text)
     #
+    # page-down:turn whole cubes 90. Pitch.
+    #
+    def upside_front(self):
+        if self.upsideLeftFlag:
+            return
+        print(f"upside_front({self.pitch_count})")
+        for cube in (self.cube1 + self.cube2 + self.cube3):
+            cube.upsideFront(self.cube_u)
+        #
+        self.pitch_count += 1
+        if self.pitch_count >= 1 and self.pitch_count <= 3:
+            self.upsideFrontFlag = True
+        else:
+            self.upsideFrontFlag = False
+            self.pitch_count = 0
+        #
+        self.mode_text = self.get_nprtext()
+        self.guidance_mode.setText(self.mode_text)
+    #
+    #
     # page-down:turn whole cubes 90. Roll.
     #
     def upside_left(self):
-        if self.upsideDownFlag:
+        if self.upsideDownFlag or self.upsideFrontFlag:
             return
         print(f"upside_left({self.roll_count})")
         for cube in (self.cube1 + self.cube2 + self.cube3):
@@ -651,10 +677,12 @@ class RubikGame(ShowBase):
     # edit text of NPR-mode
     #
     def get_nprtext(self):
-        if self.upsideDownFlag or self.upsideLeftFlag:
+        if self.upsideDownFlag or self.upsideFrontFlag or self.upsideLeftFlag:
             mode_new = ''
             if self.upsideDownFlag:
                 mode_new += '.180P.'
+            if self.upsideFrontFlag:
+                mode_new += f".{90*self.pitch_count}P."
             if self.upsideLeftFlag:
                 mode_new += f".{90*self.roll_count}R."
         else:
@@ -871,11 +899,12 @@ class RubikGame(ShowBase):
                 self.cli.clear()
             # regist current cube's attr(conf,pos)
             if self.setting[1] == '1': # auto-reg.
+                self.regCubeAttr(self.cube1, './reg/cube1')
                 self.regCubeAttr(self.cube2, './reg/cube2')
                 self.regCubeAttr(self.cube3, './reg/cube3')
                 
                 self.regfile = f"{time.strftime('%Y%m%d%H%M%S')}"
-                self.regCubeAttr(self.cube2+self.cube3, f"./reg/{self.regfile}")
+                self.regCubeAttr(self.cube1+self.cube2+self.cube3, f"./reg/{self.regfile}")
                 self.write_opelog(f"regCubeID:{self.regfile}")
             if self.setting[2] == '1': # auto-search
                 self.pattern_search(1)
@@ -1218,6 +1247,7 @@ class RubikGame(ShowBase):
     #
     def restore(self):
         self.write_opelog('restore')
+        self.restCubeAttr(self.cube1, "./reg/cube1")
         self.restCubeAttr(self.cube2, "./reg/cube2")
         self.restCubeAttr(self.cube3, "./reg/cube3")
     #
@@ -1228,6 +1258,7 @@ class RubikGame(ShowBase):
         if len(self.cmdBuffer) > 0:
             self.write_cmdlog(self.cmdBuffer)       
         # regist cube's attr(conf,pos)
+        self.regCubeAttr(self.cube1, './reg/cube1')
         self.regCubeAttr(self.cube2, './reg/cube2')
         self.regCubeAttr(self.cube3, './reg/cube3')
         
@@ -1276,10 +1307,10 @@ class RubikGame(ShowBase):
             # cli-command
             if cmd[0] == 'reg':     # regist current position of cube
                 if params != None and len(params) > 0:
-                    self.regCubeAttr(self.cube2+self.cube3, f"{params[0]}")
+                    self.regCubeAttr(self.cube1+self.cube2+self.cube3, f"{params[0]}")
             elif cmd[0] == 'ld': # load cube position from reg. file
                 if params != None and len(params) > 0:
-                    self.restCubeAttr(self.cube2+self.cube3, f"{params[0]}")
+                    self.restCubeAttr(self.cube1+self.cube2+self.cube3, f"{params[0]}")
             elif cmd[0] == 'lw': # write log-file
                 if params != None:
                     if len(params) == 1:
@@ -1591,7 +1622,11 @@ class RubikGame(ShowBase):
     def rel2abs(self, face):
         rel_south  = ['e', 'n', 'w', 's']
         abs_faceN  = ['s', 'e', 'n', 'w', 's', 'e', 'n', 'w']
-        abs_faceP  = ['n', 'e', 's', 'w', 'n', 'e', 's', 'w']
+        abs_faceP  = [
+                      ['t', 'e', 'b', 'w', 't', 'e', 'b', 'w'],
+                      ['n', 'e', 's', 'w', 'n', 'e', 's', 'w'],
+                      ['b', 'e', 't', 'w', 'b', 'e', 't', 'w']
+                     ]
         abs_faceR  = [
                       ['s', 'b', 'n', 't', 's', 'b', 'n', 't'],
                       ['s', 'w', 'n', 'e', 's', 'w', 'n', 'e'],
@@ -1608,6 +1643,9 @@ class RubikGame(ShowBase):
             if self.upsideDownFlag:
                 # swap the symbol of top and bottom
                 face = RubikCube.getPairFace(face)
+            elif self.upsideFrontFlag:
+                pitch_face  = ['t', 'n', 'b', 's', 't', 'n', 'b', 's']
+                face = pitch_face[pitch_face.index(face) + self.pitch_count]
             elif self.upsideLeftFlag:
                 roll_face  = ['t', 'e', 'b', 'w', 't', 'e', 'b', 'w']
                 face = roll_face[roll_face.index(face) + self.roll_count]
@@ -1631,7 +1669,9 @@ class RubikGame(ShowBase):
         #
         idx = idx_face + idx_south
         if self.upsideDownFlag:
-            abs_face = abs_faceP
+            abs_face = abs_faceP[1]
+        elif self.upsideFrontFlag:
+            abs_face = abs_faceP[self.pitch_count - 1]
         elif self.upsideLeftFlag:
             abs_face = abs_faceR[self.roll_count - 1]
         else:
@@ -1667,6 +1707,8 @@ class RubikGame(ShowBase):
         if undo == False:
             self.undoPos = None
         #
+        # display operation-cmd. on cmdline.
+        #
         if not self.pattern_executing:
             if dir == 'r':
                 self.cmdBuffer.append(f"{selected_face.upper()}+")
@@ -1676,6 +1718,8 @@ class RubikGame(ShowBase):
             for cmd in self.cmdBuffer:
                 cmdline += cmd
             self.cmdline.setText(cmdline)
+        #
+        # check if current game has compleated.
         #
         if self.is_completed(self.cube2+self.cube3):
             print(f"completed now!!(time={self.laptime.strlaptime()})")
@@ -1691,12 +1735,19 @@ class RubikGame(ShowBase):
     # execute face-rotation process
     #
     def rotate_face(self, face, dir):
-        if self.upsideDownFlag:
-            # adjust face-symbol for upside-down
+        #
+        # adjust face-symbol for rotation
+        #
+        if self.upsideDownFlag:  # upside-down(180.Pitch)
             if face == 't' or face == 'b' or face == 's'or face == 'n':
                 face = RubikCube.getPairFace(face)
-        if self.upsideLeftFlag:
-            # adjust face-symbol for upside-left
+        if self.upsideFrontFlag: # upside-front(+90.Pitch)
+            if face == 't' or face == 'b' or face == 's'or face == 'n':
+                if self.pitch_count == 1 or self.pitch_count == 3:
+                    pitch_face  = ['t', 'n', 'b', 's', 't', 'n', 'b', 's']
+                    face = pitch_face[pitch_face.index(face) + self.pitch_count]
+                face = RubikCube.getPairFace(face)
+        if self.upsideLeftFlag:  # upside-left(+90.Roll)
             if face == 't' or face == 'b' or face == 'e'or face == 'w':
                 if self.roll_count == 1 or self.roll_count == 3:
                     roll_face  = ['t', 'e', 'b', 'w', 't', 'e', 'b', 'w']
@@ -2047,23 +2098,30 @@ class RubikGame(ShowBase):
         #
         return    
     #
-    # check if current configration of all cubes are completed.
+    # check if current configration of all cubes are same as completed pattern.
     #
     def is_completed(self, cube_list):
-        fname = './reg/completed'
-        fnameA = './reg/completeda'
+        #
+        # load the completed pattern from reg-file.
+        #
+        fnameN = './reg/completed'
+        fnameP = f"./reg/completed{90*self.pitch_count}p"
+        fnameR = f"./reg/completed{90*self.roll_count}r"
+        if self.upsideFrontFlag:
+            fname = fnameP
+        elif self.upsideLeftFlag:
+            fname = fnameR
+        else:
+            fname = fnameN
+        #
         try:
             with open(f"{fname}.reg", 'rb') as fd:
                 ld_attrs = pickle.load(fd)
         except:
             print(f"{fname}.reg not found.")
             return
-        try:
-            with open(f"{fnameA}.reg", 'rb') as fd:
-                ld_attrsA = pickle.load(fd)
-        except:
-            print(f"{fnameA}.reg not found.")
-            return
+        #
+        # cretate the current pattern
         #
         cur_attrs = []
         for cube in cube_list:
@@ -2071,7 +2129,47 @@ class RubikGame(ShowBase):
                     'pos':cube.getPos()}
             cur_attrs.append(attr)
         #
-        return (ld_attrs == cur_attrs) or (ld_attrsA == cur_attrs) 
+        return (ld_attrs == cur_attrs) 
+    #
+    # convert center cube's-pos to db-item(pos)
+    #
+    def convPos1(self, pos):
+        position = ''
+        if pos[0] == self.cube_x:
+            position = 'w'
+        elif pos[0] == self.cube_x + self.cube_u*2:
+            position = 'e'
+        elif pos[0] == self.cube_x + self.cube_u*1:
+            if pos[1] == self.cube_y: 
+                position = 's'
+            elif pos[1] == self.cube_y + self.cube_u*2: 
+                position = 'n'
+            elif pos[1] == self.cube_y + self.cube_u*1: 
+                if pos[2] == self.cube_z:
+                    position = 'b'
+                elif pos[2] == (self.cube_z+ self.cube_u*2):
+                    position = 't'
+        #
+        return position
+    #
+    def strPos1_val(self, pos):
+        posStr =[ 
+            'w', 'e',
+            's', 'n',
+            't', 'b'
+        ]
+        posVal =[
+            (self.cube_x,               self.cube_y+self.cube_u,  self.cube_z+self.cube_u),
+            (self.cube_x+self.cube_u*2, self.cube_y+self.cube_u,  self.cube_z+self.cube_u),
+            
+            (self.cube_x+self.cube_u,   self.cube_y,               self.cube_z+self.cube_u),
+            (self.cube_x+self.cube_u,   self.cube_y+self.cube_u*2, self.cube_z+self.cube_u),
+                       
+            (self.cube_x+self.cube_u,   self.cube_y+self.cube_u,   self.cube_z+self.cube_u*2),
+            (self.cube_x+self.cube_u,   self.cube_y+self.cube_u,   self.cube_z),
+        ]
+        return posVal[posStr.index(pos)]
+    #
     #
     # convert edge cube's-pos to db-item(pos)
     #
@@ -2176,6 +2274,21 @@ class RubikGame(ShowBase):
         # color number (TWS)
         return (int(col[0]),int(col[1]),int(col[2]))
     #
+    # convert db-item(pos1,col1) to center cube's-attr  
+    #
+    def convAttr1(self, strPos, strCol):
+        Attrs = []
+        i = 0
+        k = 0
+        for _ in self.cube1:
+            pos = self.strPos1_val(strPos[i:i+1])
+            col = self.strCol_conf(strCol[k:k+3])
+            i += 1
+            k += 3
+            attr = { 'pos': pos, 'conf' : col}
+            Attrs.append(attr)
+        return Attrs
+    #
     # convert db-item(pos2,col2) to edge cube's-attr  
     #
     def convAttr2(self, strPos, strCol):
@@ -2209,10 +2322,18 @@ class RubikGame(ShowBase):
     # entry pattern-data to pattern-table in db
     #
     def entry_pattern(self, pt_id, attrs):
+        idx = 0
+        # center cube
         pos_data = ''
         col_data = ''
+        for _ in self.cube1:
+            pos_data += self.convPos1(attrs[idx].get('pos'))
+            col_data += self.convCol(attrs[idx].get('conf'))
+            idx += 1
+        cube1_attr = (pos_data, col_data)
         # edge cube
-        idx = 0
+        pos_data = ''
+        col_data = ''
         for _ in self.cube2:
             pos_data += self.convPos2(attrs[idx].get('pos'))
             col_data += self.convCol(attrs[idx].get('conf'))
@@ -2227,7 +2348,7 @@ class RubikGame(ShowBase):
             idx += 1
         cube3_attr = (pos_data, col_data)
         #
-        return self.db.insert_pattern(pt_id, cube2_attr, cube3_attr)
+        return self.db.insert_pattern(pt_id, cube1_attr, cube2_attr, cube3_attr)
     #
     # entry solution-data to solution-table in db
     #
@@ -2323,6 +2444,13 @@ class RubikGame(ShowBase):
     def pattern_search(self, opt = 2):
         pos_data = ''
         col_data = ''
+        for cube in self.cube1:
+            pos_data += self.convPos1(cube.getPos())
+            col_data += self.convCol(cube.getConf())
+        cube1_attr=(pos_data, col_data)
+        #
+        pos_data = ''
+        col_data = ''
         for cube in self.cube2:
             pos_data += self.convPos2(cube.getPos())
             col_data += self.convCol(cube.getConf())
@@ -2335,7 +2463,7 @@ class RubikGame(ShowBase):
             col_data += self.convCol(cube.getConf())
         cube3_attr=(pos_data, col_data)
         #
-        pt_id = self.db.search_pattern(cube2_attr, cube3_attr)
+        pt_id = self.db.search_pattern(cube1_attr, cube2_attr, cube3_attr)
         if pt_id == None:
             if opt > 1:
                 self.cli.prompt(f">現在のパターンに一致するデータは見つかりませんでした。")
@@ -2353,19 +2481,26 @@ class RubikGame(ShowBase):
             self.pattern_viewing = False
             return
         if pt_id == 'n' or pt_id == '':
-            pt_id, cube2, cube3 = self.db.next_pattern()
+            pt_id, cube1, cube2, cube3 = self.db.next_pattern()
             if pt_id == None:
                 self.pattern_viewing = False
                 self.cli.prompt(f">検索が終了しました。")
                 return
         else:
-            pt_id, cube2, cube3 = self.db.get_pattern(pt_id)
+            pt_id, cube1, cube2, cube3 = self.db.get_pattern(pt_id)
             if pt_id == None:
                 self.cli.prompt(f">指定パターンに一致するパターンIDは見つかりませんでした。")
                 return
 
+        cube1_attrs = self.convAttr1(cube1[0], cube1[1])
         cube2_attrs = self.convAttr2(cube2[0], cube2[1])
         cube3_attrs = self.convAttr3(cube3[0], cube3[1])
+        #
+        i = 0
+        for cube in self.cube1:
+            cube.setPosA(cube1_attrs[i].get('pos'))
+            cube.setConf(cube1_attrs[i].get('conf'))
+            i += 1
         #
         i = 0
         for cube in self.cube2:
