@@ -18,6 +18,7 @@ from direct.gui.DirectGui import *
 from rubikcube.rubikcube import RubikCube
 from mycli.mycli import MyCli
 from laptime.laptime import LapTime
+from cmdcounter.cmdcounter import CmdCounter
 import pickle
 from mysqlite3.mysqlite3 import MyDb
 
@@ -56,7 +57,6 @@ class RubikGame(ShowBase):
         # under startting operation
         self.restartFlag = False
         # current rotation mode of whole cube.  
-        self.upsideDownFlag = False     # 180deg. Pitch
         self.upsideFrontFlag = False     # 90deg.  Roll
         self.upsideLeftFlag = False     # 90deg.  Roll
         self.roll_count = 0             # 0:0/1:90/2:180/3:270
@@ -249,6 +249,15 @@ class RubikGame(ShowBase):
                    fg=(1, 1, 1, 1), bg=(1, 0, 1, 1), pos=(2.4, -1.96), 
                    scale=0.06, font=font,
                    shadow=(0, 0, 0, 0.5))
+        # 
+        # display counter of primitive cmd.
+        #
+        self.cmdcount = CmdCounter() # count of comfirmed primitive cmd.
+        self.cmd_counter = OnscreenText(text=f"{self.cmdcount.count():4d}",
+                   parent=self.a2dTopLeft, align=TextNode.ALeft,
+                   fg=(1, 1, 1, 1), bg=(1, 0, 1, 1), pos=(2.2, -1.96), 
+                   scale=0.06, font=font,
+                   shadow=(0, 0, 0, 0.5))
         #
         # Radio-Button list( Game-mode selection)
         #
@@ -266,8 +275,9 @@ class RubikGame(ShowBase):
         for button in buttons:
             button.setOthers(buttons)
         #  
+        ############################################
         # key event definition
-        #
+        ############################################
         '''
         "escape", "f"+"1-12" (e.g. "f1","f2",..."f12"), "print_screen" "scroll_lock"
 	    "backspace", "insert", "home", "page_up", "num_lock"
@@ -284,8 +294,6 @@ class RubikGame(ShowBase):
         # reset the camera's position
         self.accept("home", self.reset_camera)
         self.accept("o", self.opposit_camera)
-        # turn the rubik-cube upside down(180P)
-        #self.accept("page_up", self.upside_down)
         # turn the rubik-cube 90P
         self.accept("page_down", self.upside_front)
         # turn the rubik-cube 90R
@@ -396,7 +404,8 @@ class RubikGame(ShowBase):
         # set the initial position of all cubes 
         #
         self.set_initial_cube()
-        #
+        #  end of __init__()
+    #########################
     #
     #   Task to display the lap-time every second under palying this game.
     #
@@ -483,7 +492,6 @@ class RubikGame(ShowBase):
     # set initial(complete) position of all cubes 
     #
     def set_initial_cube(self):
-        self.upsideDownFlag = False
         self.upsideFrontFlag = False
         self.upsideLeftFlag = False
         self.pitch_count = 0
@@ -570,7 +578,7 @@ class RubikGame(ShowBase):
         self.cube_nw.setPos(self.cube_x, self.cube_y + self.cube_u*2, self.cube_z + self.cube_u)
         self.cube_nw.setHpr(self.cube_h, self.cube_p, self.cube_r)
     ############################################
-    # Key-boad event habdler
+    # Key-boad event handler
     ############################################
     # arrow-key:move the camera's position
     #
@@ -614,32 +622,20 @@ class RubikGame(ShowBase):
     # ctrl+'m':
     #
     def switch_absmode(self):
-        print(self.mode_text)
         self.abs_mode = not self.abs_mode
         if self.abs_mode:
             self.mode_text = self.mode_text.replace('REL', 'ABS')
         else:
             self.mode_text = self.mode_text.replace('ABS', 'REL')
-        self.guidance_mode.setText(self.mode_text)
-    #
-    # page-up:turn whole cube 180. Pitch.
-    #
-    def upside_down(self):
-        if self.upsideLeftFlag:
-            return
-        print("upside_down")
-        self.upsideDownFlag = (not self.upsideDownFlag)
-        for cube in (self.cube1 + self.cube2 + self.cube3):
-            cube.upsideDown(self.cube_u)
         #
-        self.mode_text = self.get_nprtext()
+        print(self.mode_text)
         self.guidance_mode.setText(self.mode_text)
     #
     # page-down:turn whole cubes 90. Pitch.
     #
     def upside_front(self):
-        if self.upsideLeftFlag:
-            return
+        #if self.upsideLeftFlag:
+        #    return
         print(f"upside_front({self.pitch_count})")
         for cube in (self.cube1 + self.cube2 + self.cube3):
             cube.upsideFront(self.cube_u)
@@ -658,8 +654,6 @@ class RubikGame(ShowBase):
     # page-down:turn whole cubes 90. Roll.
     #
     def upside_left(self):
-        if self.upsideDownFlag or self.upsideFrontFlag:
-            return
         print(f"upside_left({self.roll_count})")
         for cube in (self.cube1 + self.cube2 + self.cube3):
             cube.upsideLeft(self.cube_u)
@@ -677,10 +671,8 @@ class RubikGame(ShowBase):
     # edit text of NPR-mode
     #
     def get_nprtext(self):
-        if self.upsideDownFlag or self.upsideFrontFlag or self.upsideLeftFlag:
+        if self.upsideFrontFlag or self.upsideLeftFlag:
             mode_new = ''
-            if self.upsideDownFlag:
-                mode_new += '.180P.'
             if self.upsideFrontFlag:
                 mode_new += f".{90*self.pitch_count}P."
             if self.upsideLeftFlag:
@@ -884,12 +876,15 @@ class RubikGame(ShowBase):
     # 
     # enter-key:confirm the commands in cmdline.
     #
-    def confirm(self):
+    def confirm(self, cancel = False):
         if self.ope_mode[0] == RubikGame.PLAY_MODE:
             self.write_opelog('confirm')
             # save cmdBuffer to log-file
             if len(self.cmdBuffer) > 0:
-                self.write_cmdlog(self.cmdBuffer)
+                if not cancel:
+                    self.write_cmdlog(self.cmdBuffer)
+                    self.cmdcount.countup(self.cmdBuffer)
+                    self.cmd_counter.setText(f"{self.cmdcount.count():4d}")
                 # clear cmdBuffer
                 self.cmdBuffer = []
                 self.undoPos == None
@@ -972,6 +967,7 @@ class RubikGame(ShowBase):
                     self.right_rotate(undo = True)
                 else:
                     self.left_rotate(undo = True)
+                #
             else:
                 self.undoPos = 0
         else:
@@ -992,7 +988,7 @@ class RubikGame(ShowBase):
         #
         if cur_mode == RubikGame.PLAY_MODE:
             self.write_opelog('cancel -> confirm')
-            self.confirm()
+            self.confirm(True)
         #        
         self.ope_mode[0] = cur_mode
         return
@@ -1242,7 +1238,9 @@ class RubikGame(ShowBase):
         self.cli.prompt(">任意の位置で左ボタンをクリックして下さい！！\n ランダムに並び替えます。\n"\
                             " ESCキーでキャンセルします。")
         self.restartFlag = True
-    #
+        self.cmdcount.start()
+        self.cmd_counter.setText('   0')
+        #
     # ctrl+r:restore cube's positon from reg-file
     #
     def restore(self):
@@ -1622,6 +1620,7 @@ class RubikGame(ShowBase):
     def rel2abs(self, face):
         rel_south  = ['e', 'n', 'w', 's']
         abs_faceN  = ['s', 'e', 'n', 'w', 's', 'e', 'n', 'w']
+        
         abs_faceP  = [
                       ['t', 'e', 'b', 'w', 't', 'e', 'b', 'w'],
                       ['n', 'e', 's', 'w', 'n', 'e', 's', 'w'],
@@ -1632,6 +1631,7 @@ class RubikGame(ShowBase):
                       ['s', 'w', 'n', 'e', 's', 'w', 'n', 'e'],
                       ['s', 't', 'n', 'b', 's', 't', 'n', 'b']
                      ]       
+        
         # specified face-symbol absolutely
         if face.isupper():
             # convert to  lower case  
@@ -1640,15 +1640,14 @@ class RubikGame(ShowBase):
         # convert top/bottom face-symbol
         #
         if face == 't' or face == 'b':
-            if self.upsideDownFlag:
-                # swap the symbol of top and bottom
-                face = RubikCube.getPairFace(face)
-            elif self.upsideFrontFlag:
+            
+            if self.upsideFrontFlag:
                 pitch_face  = ['t', 'n', 'b', 's', 't', 'n', 'b', 's']
                 face = pitch_face[pitch_face.index(face) + self.pitch_count]
             elif self.upsideLeftFlag:
                 roll_face  = ['t', 'e', 'b', 'w', 't', 'e', 'b', 'w']
                 face = roll_face[roll_face.index(face) + self.roll_count]
+            
             return face
         #
         # serach the relative symbol of face on south
@@ -1668,14 +1667,16 @@ class RubikGame(ShowBase):
         idx_face = rel_face.index(face)     # index of specified face  
         #
         idx = idx_face + idx_south
-        if self.upsideDownFlag:
-            abs_face = abs_faceP[1]
-        elif self.upsideFrontFlag:
+        
+        if self.upsideFrontFlag:
             abs_face = abs_faceP[self.pitch_count - 1]
         elif self.upsideLeftFlag:
             abs_face = abs_faceR[self.roll_count - 1]
         else:
             abs_face = abs_faceN
+        '''
+        abs_face = abs_faceN
+        '''
         #print(f"{rel_sym}[{idx_south}]:{face}[{idx_face}] -> {abs_face[idx]}[{idx}]")
         return abs_face[idx]
     #
@@ -1700,6 +1701,7 @@ class RubikGame(ShowBase):
     def exec_rotate(self, dir, undo = False): #'+(;)'
         # convert relative symbol(low-case) to absolute symbol
         selected_face = self.rel2abs(self.selected_face)
+        print(f"rel2abs:{self.selected_face} -> {selected_face}")
         #
         # transfer the cubes-attr. of selected face 
         #
@@ -1738,9 +1740,6 @@ class RubikGame(ShowBase):
         #
         # adjust face-symbol for rotation
         #
-        if self.upsideDownFlag:  # upside-down(180.Pitch)
-            if face == 't' or face == 'b' or face == 's'or face == 'n':
-                face = RubikCube.getPairFace(face)
         if self.upsideFrontFlag: # upside-front(+90.Pitch)
             if face == 't' or face == 'b' or face == 's'or face == 'n':
                 if self.pitch_count == 1 or self.pitch_count == 3:
@@ -1753,6 +1752,7 @@ class RubikGame(ShowBase):
                     roll_face  = ['t', 'e', 'b', 'w', 't', 'e', 'b', 'w']
                     face = roll_face[roll_face.index(face) + self.roll_count]
                 face = RubikCube.getPairFace(face)
+        
         #
         # call rotate-function to transfer the cube-attr. of selected face 
         #
@@ -2226,7 +2226,7 @@ class RubikGame(ShowBase):
         ]
         return posVal[posStr.index(pos)]
     #
-    # convert conner cube's-pos to db-item(pos)
+    # convert corner cube's-pos to db-item(pos)
     #
     def convPos3(self, pos):
         # X('w' or 'e')
@@ -2304,7 +2304,7 @@ class RubikGame(ShowBase):
             Attrs.append(attr)
         return Attrs
     #
-    # convert db-item(pos3,col3) to conner cube's-attr  
+    # convert db-item(pos3,col3) to corner cube's-attr  
     #
     def convAttr3(self,  strPos, strCol):
         Attrs = []
@@ -2339,7 +2339,7 @@ class RubikGame(ShowBase):
             col_data += self.convCol(attrs[idx].get('conf'))
             idx += 1
         cube2_attr = (pos_data, col_data)
-        # conner cube
+        # corner cube
         pos_data = ''
         col_data = ''
         for _ in self.cube3:
