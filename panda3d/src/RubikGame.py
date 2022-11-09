@@ -666,7 +666,7 @@ class RubikGame(ShowBase):
         self.guidance_mode.setText(self.mode_text)
         #
         if not self.upsideFrontFlag and not self.upsideLeftFlag:
-            self.set_initial_cube() 
+            pass #TODO 
     #
     #
     # page-down:turn whole cubes 90. Roll.
@@ -688,7 +688,7 @@ class RubikGame(ShowBase):
         self.guidance_mode.setText(self.mode_text)
         #
         if not self.upsideFrontFlag and not self.upsideLeftFlag:
-            self.set_initial_cube() 
+            pass  #TODO 
     #
     # edit text of NPR-mode
     #
