@@ -33,7 +33,7 @@ class RubikCube():
     #   type:'1':center,'2':edge, '3':corner
     #   mpath: path of model file(RubikCube.egg.pz)
     #
-    def __init__(self, base, type, mpath, light = None):
+    def __init__(self, base, type, sym, mpath, light = None):
         if type == RubikCube.type:
             RubikCube.count += 1
         else:
@@ -42,6 +42,7 @@ class RubikCube():
         #
         self.id = RubikCube.count
         self.type = type
+        self.sym = sym
         # current color-configration(T/W/S)
         self.conf = [1, 2, 3]
         #
