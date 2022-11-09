@@ -92,6 +92,45 @@ class MyDb:
             pt_id = rs['pt_id']
         return pt_id
     #
+    # entry cube's completed pattern to com_pattern-table
+    #
+    def insert_comp(self, cube1, cube2, cube3, pitch, roll):
+        entry_no = None
+        sql = "select entry_no from comp_pattern where "\
+            + f"pos1='{cube1[0]}' and col1='{cube1[1]}' and "\
+            + f"pos2='{cube2[0]}' and col2='{cube2[1]}' and "\
+            + f"pos3='{cube3[0]}' and col3='{cube3[1]}'"
+        rs = self.query(sql).fetchone()
+        if rs == None:
+            entry_no = 0
+            sql = "insert into comp_pattern(pos1,col1,pos2,col2,pos3,col3,pitch,roll) values("\
+                + f"'{cube1[0]}',"\
+                + f"'{cube1[1]}',"\
+                + f"'{cube2[0]}',"\
+                + f"'{cube2[1]}',"\
+                + f"'{cube3[0]}',"\
+                + f"'{cube3[1]}',"\
+                + f"{pitch},{roll})"
+            self.execute(sql)
+        else:
+            entry_no = rs['entry_no']
+        return entry_no
+    #
+    # search comp_pattern-table by current cube's attr.
+    #
+    def search_comp(self, cube1, cube2, cube3):
+        sql = "select entry_no from comp_pattern where "\
+            + f"pos1='{cube1[0]}' and col1='{cube1[1]}' and "\
+            + f"pos2='{cube2[0]}' and col2='{cube2[1]}' and "\
+            + f"pos3='{cube3[0]}' and col3='{cube3[1]}'"
+        #print(f"sql:{sql}")
+        rs = self.query(sql).fetchone()
+        if rs == None:
+            entry_no = None
+        else:
+            entry_no = rs['entry_no']
+        return entry_no
+    #
     # entry solution to solution-table
     #
     def insert_solution(self, pt_id, cmd):
