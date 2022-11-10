@@ -346,6 +346,7 @@ class RubikGame(ShowBase):
         # setting mode
         self.accept("space", self.space_key)
         self.accept("backspace", self.backspace_key)
+        self.accept("backspace-repeat", self.backspace_key)
         self.accept("delete", self.delete_key)
         self.accept("arrow_right", self.cursor_right)
         self.accept("arrow_left", self.cursor_left)
@@ -1030,7 +1031,7 @@ class RubikGame(ShowBase):
     # ctlr+c:copy commands to work-buffer.
     #
     def copy_cmd(self):
-        self.copyBuffer = self.cmdBuffer
+        self.copyBuffer = self.cmdBuffer.copy()
     #
     # ctlr+p:past work-buffer to input-line.
     #
