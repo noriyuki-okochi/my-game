@@ -654,19 +654,16 @@ class RubikGame(ShowBase):
         for cube in (self.cube1 + self.cube2 + self.cube3):
             cube.upsideFront(self.cube_u)
         #
+        self.upsideFrontFlag = True
         self.pitch_count += 1
-        if self.pitch_count >= 1 and self.pitch_count <= 3:
-            self.upsideFrontFlag = True
-        else:
-            self.upsideFrontFlag = False
+        if self.pitch_count > 3:
             self.pitch_count = 0
+        #
+        self.if_normal_position()
         #
         self.mode_text = self.get_nprtext()
         print(self.mode_text)
         self.guidance_mode.setText(self.mode_text)
-        #
-        if not self.upsideFrontFlag and not self.upsideLeftFlag:
-            pass #TODO 
     #
     #
     # page-down:turn whole cubes 90. Roll.
@@ -676,19 +673,26 @@ class RubikGame(ShowBase):
         for cube in (self.cube1 + self.cube2 + self.cube3):
             cube.upsideLeft(self.cube_u)
         #
+        self.upsideLeftFlag = True
         self.roll_count += 1
-        if self.roll_count >= 1 and self.roll_count <= 3:
-            self.upsideLeftFlag = True
-        else:
-            self.upsideLeftFlag = False
+        if self.roll_count > 3:
             self.roll_count = 0
+        #
+        self.if_normal_position()
         #
         self.mode_text = self.get_nprtext()
         print(self.mode_text)
         self.guidance_mode.setText(self.mode_text)
-        #
-        if not self.upsideFrontFlag and not self.upsideLeftFlag:
-            pass  #TODO 
+        return
+    #
+    def if_normal_position(self):
+        if self.cube_s.getPos() == (self.cube_x + self.cube_u, self.cube_y, self.cube_z + self.cube_u) and \
+           self.cube_b.getPos() == (self.cube_x + self.cube_u, self.cube_y  + self.cube_u, self.cube_z):
+            self.upsideFrontFlag = False
+            self.pitch_count = 0
+            self.upsideLeftFlag = False
+            self.roll_count = 0
+        return
     #
     # edit text of NPR-mode
     #
