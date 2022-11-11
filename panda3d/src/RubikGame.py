@@ -237,7 +237,7 @@ class RubikGame(ShowBase):
         self.mode_npr = '.NL.'
         self.guidance_mode = OnscreenText(text = self.mode_text,
                    parent=self.a2dTopLeft, align=TextNode.ALeft,
-                   fg=(0, 1, 1, 1), bg=(1, 0, 1, 1), pos=(0.05, -0.35), 
+                   fg=(0, 1, 1, 1), bg=(1, 0, 1, 1), pos=(1.6, -1.96), 
                    scale=0.06, font=font,
                    shadow=(0, 0, 0, 0.5))
         # 
@@ -256,6 +256,14 @@ class RubikGame(ShowBase):
         self.cmd_counter = OnscreenText(text=f"{self.cmdcount.count():4d}",
                    parent=self.a2dTopLeft, align=TextNode.ALeft,
                    fg=(1, 1, 1, 1), bg=(1, 0, 1, 1), pos=(2.2, -1.96), 
+                   scale=0.06, font=font,
+                   shadow=(0, 0, 0, 0.5))
+        # 
+        # display message.
+        #
+        self.message = OnscreenText(text='',
+                   parent=self.a2dTopLeft, align=TextNode.ALeft,
+                   fg=(1, 1, 1, 1), bg=(1, 0, 1, 1), pos=(1.7, -1.0), 
                    scale=0.06, font=font,
                    shadow=(0, 0, 0, 0.5))
         #
@@ -445,6 +453,7 @@ class RubikGame(ShowBase):
     #    
     def on_setting(self):
         self.cur_mode = RubikGame.SET_MODE
+        self.message.setText('')
         self.set_help_text()
         self.cli.start()
         #
@@ -863,6 +872,7 @@ class RubikGame(ShowBase):
     # escape-key:suspend current seaquence
     #  
     def escape(self):
+        self.message.setText('')
         if self.ope_mode[0] == RubikGame.PLAY_MODE:
             self.write_opelog('esc')
             self.selected_face = None
@@ -970,7 +980,7 @@ class RubikGame(ShowBase):
                 self.cli.start()
                 if self.recent_id != None:
                     # pre-set recent-id to input-line
-                    self.cli.append(self.recent_id)
+                    self.cli.append(str(self.recent_id))
                     self.recent_id = None
         #
         return
@@ -1255,6 +1265,7 @@ class RubikGame(ShowBase):
     #
     def re_start(self):
         self.write_opelog('restart')
+        self.message.setText('')
         # set all cube to initial position
         self.set_initial_cube()
         self.undoPos == None
@@ -1806,6 +1817,8 @@ class RubikGame(ShowBase):
             self.write_opelog(f"completed now!!(time={self.laptime.strlaptime()})")
             # stop to update lap-time
             if self.laptime.enabled():
+                self.message.setText(f">おめでとうございます！完成です!!")
+                print(f"You are winner.")
                 self.taskMgr.remove("laptime_update")
                 self.laptime.clear()
         return
@@ -2180,7 +2193,39 @@ class RubikGame(ShowBase):
     # check if current configration of all cubes are same as completed pattern.
     #
     def is_completed(self, cube_list):
-        return self.pattern_search(-1) != None
+        # search center-cube on west-face
+        cube_c = None
+        for cube in self.cube1:
+            if cube.getX() == self.cube_x:
+                cube_c = cube
+                #print(f"{cube_c.sym}:{cube_c.getHpr()}")
+                break
+        if cube_c == None:
+            return False
+        # check if all corner and edge cubes on west-face have same HPR as center cube's.
+        for cube in (self.cube2+self.cube3):
+            if cube.getX() == self.cube_x and cube.getHpr() != cube_c.getHpr():
+                #print(f"{cube.sym}:{cube.getHpr()}")
+                return False
+        #
+        # search center-cube on west-south
+        cube_c = None
+        for cube in self.cube1:
+            if cube.getY() == self.cube_y:
+                cube_c = cube
+                #print(f"{cube_c.sym}:{cube_c.getHpr()}")
+                break
+        if cube_c == None:
+            return False
+        # check if all corner and edge cubes on south-face have same HPR as center cube's.
+        for cube in (self.cube2+self.cube3):
+            if cube.getY() == self.cube_y and cube.getHpr() != cube_c.getHpr():
+                #print(f"{cube.sym}:{cube.getHpr()}")
+                return False
+        #
+        if self.pattern_search(-1) == None:
+            print("this pattern not found in comp-pattern!!")
+        return True
     #
     # convert center cube's-pos to db-item(pos)
     #
