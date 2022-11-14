@@ -183,8 +183,9 @@ class RubikGame(ShowBase):
         # 
         guid_text =" south/north/east/west/top/bottom\n"\
                    " Green/Blue/Orange/Red/Yellow/White\n"\
-                   " ctrl+m:Switch rel.<->abs. mode\n"\
-                   " pg-dn :90-Pitch  scroll:90-Roll\n\n"\
+                   " ctrl+m:Switch Rel.<->Abs. Mode\n"\
+                   " pg-dn :90-Pitch  scroll:90-Roll\n"\
+                   "                  numlock:Normal\n"\
                    " +:Right -:Left\n"\
                    " y:Y-ex  z:Z-ex v:Inter {<|>}:Around\n"\
                    " u:Undo last cmd.\n"\
@@ -308,6 +309,8 @@ class RubikGame(ShowBase):
         self.accept("page_down", self.upside_front)
         # turn the rubik-cube 90R
         self.accept("scroll_lock", self.upside_left)
+        # turn the rubik-cube to initial position
+        self.accept("num_lock", self.upside_normal)
         # set all cube to initial position( restart game)
         self.accept("control-s", self.re_start)
 
@@ -666,8 +669,8 @@ class RubikGame(ShowBase):
         #
         self.upsideFrontFlag = True
         self.pitch_count += 1
-        if self.pitch_count > 3:
-            self.pitch_count = 0
+        #if self.pitch_count > 3:
+        #    self.pitch_count = 0
         #
         self.if_normal_position()
         #
@@ -685,8 +688,8 @@ class RubikGame(ShowBase):
         #
         self.upsideLeftFlag = True
         self.roll_count += 1
-        if self.roll_count > 3:
-            self.roll_count = 0
+        #if self.roll_count > 3:
+        #    self.roll_count = 0
         #
         self.if_normal_position()
         #
@@ -695,14 +698,92 @@ class RubikGame(ShowBase):
         self.guidance_mode.setText(self.mode_text)
         return
     #
+    # num-lock:turn whole cubes to normal position.
+    #
+    def upside_normal(self):
+        print(f"upside_normal")
+        #
+        # search the center-cube on 'T'/'W'/'E' and move these faces to normal position.
+        #
+        face_sym = ['t', 'w', 's']
+        for sym in face_sym:
+            Y = self.cube_y + self.cube_u
+            if sym == 't':
+                Z = self.cube_z + self.cube_u*2
+                cube = [cube for cube in self.cube1 if cube.getY() == Y and cube.getZ() == Z]
+            if sym == 'w':
+                X = self.cube_x
+                cube = [cube for cube in self.cube1 if cube.getY() == Y and cube.getX() == X]
+            if sym == 's':
+                Y = self.cube_y
+                X = self.cube_x + self.cube_u
+                cube = [cube for cube in self.cube1 if cube.getY() == Y and cube.getX() == X]
+            #
+            roll_count, pitch_count = self.get_turnCount(sym, cube[0])
+            print(f"{sym}->{cube[0].sym}:roll={roll_count},pitch={pitch_count}")
+            #
+            # turn to roll direction
+            #
+            for _ in range(roll_count):
+                for cube_t in self.cube1 + self.cube2 + self.cube3:
+                    cube_t.upsideLeft(self.cube_u)
+            #
+            # turn to pitch direction
+            #
+            for _ in range(pitch_count):
+                for cube_t in self.cube1 + self.cube2 + self.cube3:
+                    cube_t.upsideFront(self.cube_u)
+        #
+        if not self.if_normal_position():
+            self.upside_normal()
+        else:
+            self.mode_text = self.get_nprtext()
+            print(self.mode_text)
+            self.guidance_mode.setText(self.mode_text)
+        return
+    #
+    # get candidate Roll/Pitch-turn count to move whole cubes to normal position.
+    #
+    def get_turnCount(self, face, cube):
+        face_roll   = ['t', 'w', 'b', 'e']
+        face_pitch  = ['s', 'b', 'n', 't']
+        
+        roll_count = 0
+        pitch_count = 0
+        #
+        if face == 't' or face == 'w':
+            if cube.sym in face_roll:
+                ti = face_roll.index(cube.sym)
+                roll_count = ti - face_roll.index(face)
+                if roll_count  < 0: # in case of 'w'
+                    roll_count += 4
+            else:
+                if face == 't':
+                    pitch_count = 1
+                elif face == 'w':
+                    roll_count = 1
+            #
+        elif face == 's': 
+            if cube.sym in face_pitch:
+                ti = face_pitch.index(cube.sym)
+                pitch_count = ti - face_pitch.index(face)
+            else:
+                roll_count = 1
+        #
+        return (roll_count, pitch_count)
+    #
+    # check if current pattern is normal position
+    #
     def if_normal_position(self):
+        bRet = False
         if self.cube_s.getPos() == (self.cube_x + self.cube_u, self.cube_y, self.cube_z + self.cube_u) and \
            self.cube_b.getPos() == (self.cube_x + self.cube_u, self.cube_y  + self.cube_u, self.cube_z):
             self.upsideFrontFlag = False
             self.pitch_count = 0
             self.upsideLeftFlag = False
             self.roll_count = 0
-        return
+            bRet = True
+        return bRet
     #
     # edit text of NPR-mode
     #
@@ -1817,7 +1898,7 @@ class RubikGame(ShowBase):
             self.write_opelog(f"completed now!!(time={self.laptime.strlaptime()})")
             # stop to update lap-time
             if self.laptime.enabled():
-                self.message.setText(f">おめでとうございます！完成です!!")
+                self.message.setText(f"!!完成しました!!\nおめでとうございます！")
                 print(f"You are winner.")
                 self.taskMgr.remove("laptime_update")
                 self.laptime.clear()
