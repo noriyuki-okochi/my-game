@@ -33,6 +33,7 @@ class MyDb:
         try:
             rs = self.cur.execute(sql)
         except:
+            rs = None
             print(f"{traceback.format_exc()}")
             print(f"sql:{sql}")
         return rs
