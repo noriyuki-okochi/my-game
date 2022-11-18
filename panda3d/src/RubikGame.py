@@ -186,7 +186,7 @@ class RubikGame(ShowBase):
                    " ctrl+m:Switch Rel.<->Abs. Mode\n"\
                    " pg-dn :90-Pitch  scroll:90-Roll\n"\
                    "                  numlock:Normal\n"\
-                   " +:Right -:Left\n"\
+                   " ;:Right -:Left\n"\
                    " y:Y-ex  z:Z-ex v:Inter {<|>}:Around\n"\
                    " u:Undo last cmd.\n"\
                    " ctrl+z:Cancel un-confirmed cmd.\n"\
@@ -202,7 +202,7 @@ class RubikGame(ShowBase):
         # 
         guid_text = " →←↑↓ : Move camera\n"\
                     " home : Home position\n"\
-                    " pg-up: Zoom o: Opposit side"
+                    " o : Opposit side  + : Zoom  "
         self.guidance2 = OnscreenText(text = guid_text,
                    parent=self.a2dTopLeft, align=TextNode.ALeft,
                    fg=(1, 1, 1, 1), pos=(0.54, -0.1), 
@@ -304,11 +304,13 @@ class RubikGame(ShowBase):
         self.accept("home", self.reset_camera)
         self.accept("o", self.opposit_camera)
         # zoom-up
-        self.accept("page_up", self.zoom_camera)
+        self.accept("shift-;", self.zoom_camera)
         # turn the rubik-cube 90P
         self.accept("page_down", self.upside_front)
+        self.accept("page_up", self.upside_back)
         # turn the rubik-cube 90R
         self.accept("scroll_lock", self.upside_left)
+        self.accept("pause", self.upside_right)
         # turn the rubik-cube to initial position
         self.accept("num_lock", self.upside_normal)
         # set all cube to initial position( restart game)
@@ -638,11 +640,14 @@ class RubikGame(ShowBase):
     # pg-up:zoom up camera
     #
     def zoom_camera(self):
-        if self.camera_d < 12:
-            self.camera_d = 20
+        if self.ope_mode[0] == RubikGame.PLAY_MODE:
+            if self.camera_d < 12:
+                self.camera_d = 20
+            else:
+                self.camera_d -= 1
+            self.move_camera()
         else:
-            self.camera_d -= 1
-        self.move_camera()
+            self.cli.input('+')
         return
         
     #
@@ -677,6 +682,11 @@ class RubikGame(ShowBase):
         self.mode_text = self.get_nprtext()
         print(self.mode_text)
         self.guidance_mode.setText(self.mode_text)
+        #
+    def upside_back(self):
+        for _ in range(3):
+            self.upside_front()
+        return
     #
     #
     # page-down:turn whole cubes 90. Roll.
@@ -696,6 +706,11 @@ class RubikGame(ShowBase):
         self.mode_text = self.get_nprtext()
         print(self.mode_text)
         self.guidance_mode.setText(self.mode_text)
+        return
+        #
+    def upside_right(self):
+        for _ in range(3):
+            self.upside_left()
         return
     #
     # num-lock:turn whole cubes to normal position.
@@ -1512,6 +1527,8 @@ class RubikGame(ShowBase):
                 # stop autoTask
                 self.taskMgr.remove("autoTask")
                 self.autoStart = False
+                if self.pattern_viewing:
+                    self.pattern_viewing = False
                 self.preDt = 0
             if self.pattern_executing:
                 self.pattern_executing = False
@@ -2573,8 +2590,8 @@ class RubikGame(ShowBase):
                     pt_id = []
                 if ('#quit' in line) or ('#exit' in line):
                     break
-            if ('#cancel' in line):
-                cancel_flg = True
+            #if ('#cancel' in line):
+            #    cancel_flg = True
             if line[0] != '#':
                 if pt_id and cancel_flg == False:
                     self.entry_solution(pt_id, line)
@@ -2658,6 +2675,7 @@ class RubikGame(ShowBase):
     # search record from 'pattern'  table by pt_id and view rubik-cubes.
     #
     def pattern_view(self, pt_id):
+        print(f"pattern_view:{pt_id}")
         if pt_id == 'q':
             self.cli.prompt(f">")
             self.pattern_viewing = False
@@ -2671,6 +2689,7 @@ class RubikGame(ShowBase):
         else:
             pt_id, cube1, cube2, cube3 = self.db.get_pattern(pt_id)
             if pt_id == None:
+                self.pattern_viewing = False
                 self.cli.prompt(f">指定パターンに一致するパターンIDは見つかりませんでした。")
                 return
 
