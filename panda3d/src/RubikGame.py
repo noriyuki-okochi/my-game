@@ -306,11 +306,11 @@ class RubikGame(ShowBase):
         # zoom-up
         self.accept("shift-;", self.zoom_camera)
         # turn the rubik-cube 90P
-        self.accept("page_down", self.upside_front)
-        self.accept("page_up", self.upside_back)
+        self.accept("page_down", self.rotate_p90)
+        self.accept("page_up", self.rotate_p270)
         # turn the rubik-cube 90R
-        self.accept("scroll_lock", self.upside_left)
-        self.accept("pause", self.upside_right)
+        self.accept("scroll_lock", self.rotate_r90)
+        self.accept("pause", self.rotate_r270)
         # turn the rubik-cube to initial position
         self.accept("num_lock", self.upside_normal)
         # set all cube to initial position( restart game)
@@ -665,6 +665,71 @@ class RubikGame(ShowBase):
     #
     # page-down:turn whole cubes 90. Pitch.
     #
+    def rotate_p90(self):
+        self.rotate_cube('P', 90)
+    #
+    # page-up:turn whole cubes 270. Pitch.
+    #
+    def rotate_p270(self):
+        self.rotate_cube('P', -90)
+    #
+    # scroll-lock:turn whole cubes 90. Roll.
+    #
+    def rotate_r90(self):
+        self.rotate_cube('R', 90)
+    #
+    # pause:turn whole cubes 270. Roll.
+    #
+    def rotate_r270(self):
+        self.rotate_cube('R', -90)
+    #
+    #
+    # turn the whole cubes Pitch/Roll .
+    #
+    def rotate_cube(self, dir, angle):
+        #
+        # calucurate camera's position.
+        #  
+        rx = self.camera_rx
+        if self.camera_rx < 0.0:
+            rx = 2*math.pi - abs(self.camera_rx)%(2*math.pi) 
+        cnt = int((rx/(math.pi/2))%4)
+        #
+        # convert the relative dir. to absolute dir.
+        #  
+        dirA = dir
+        angleA = angle
+        if cnt == 0:
+            if dir == 'P':
+                dirA = 'R'
+                angleA = (-1)*angle
+            elif dir == 'R':
+                dirA = 'P'
+        elif cnt == 1:
+            angleA = (-1)*angle
+        elif cnt == 2:
+            if dir == 'P':
+                dirA = 'R'
+            elif dir == 'R':
+                dirA = 'P'
+                angleA = (-1)*angle
+        #
+        print(f"{cnt}:{dir} -> {dirA}, {angle} -> {angleA}")
+        #
+        if dirA == 'P':
+            if angleA == 90:
+                self.upside_front()
+            elif angleA == -90:
+                self.upside_back()
+        elif dirA == 'R':
+            if angleA == 90:
+                self.upside_left()
+            elif angleA == -90:
+                self.upside_right()
+        return
+    #
+    # turn the whole cubes 90. Pitch.
+    #
     def upside_front(self):
         #if self.upsideLeftFlag:
         #    return
@@ -680,7 +745,7 @@ class RubikGame(ShowBase):
         self.if_normal_position()
         #
         self.mode_text = self.get_nprtext()
-        print(self.mode_text)
+        #print(self.mode_text)
         self.guidance_mode.setText(self.mode_text)
         #
     def upside_back(self):
@@ -689,7 +754,7 @@ class RubikGame(ShowBase):
         return
     #
     #
-    # page-down:turn whole cubes 90. Roll.
+    # turn the whole cubes 90. Roll.
     #
     def upside_left(self):
         #print(f"upside_left({self.roll_count})")
@@ -704,7 +769,7 @@ class RubikGame(ShowBase):
         self.if_normal_position()
         #
         self.mode_text = self.get_nprtext()
-        print(self.mode_text)
+        #print(self.mode_text)
         self.guidance_mode.setText(self.mode_text)
         return
         #
@@ -753,7 +818,7 @@ class RubikGame(ShowBase):
             self.upside_normal()
         else:
             self.mode_text = self.get_nprtext()
-            print(self.mode_text)
+            #print(self.mode_text)
             self.guidance_mode.setText(self.mode_text)
         return
     #
