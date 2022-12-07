@@ -48,11 +48,13 @@ class RubikGame(ShowBase):
         self.cmdfileSetting = False
         self.read_fd = None
         self.read_count = 0
+        self.ope_count = 0
         self.autoStart = False
         self.preDt = 0
         self.cmdKeyinSetting = False
         self.pattern_viewing = False
         self.pattern_executing = False
+        self.step_exeflag = False
         self.recent_id = None
         # under startting operation
         self.restartFlag = False
@@ -1562,11 +1564,23 @@ class RubikGame(ShowBase):
                 self.do_cmdline(line)
                 #
                 if self.pattern_executing:
-                     # remove the first cmd. from cmd. history-line 
+                     # remove the first cmd. from cmd. history-line                     cmdline = self.cmdline.getText()
                     cmdline = self.cmdline.getText()
                     idx = cmdline.index('：')
-                    cmdline = cmdline[:idx+1] + cmdline[idx+3:]
+                    if self.step_exeflag:
+                        idx2 = idx + 3
+                        if cmdline[idx2] == ';':
+                            idx2 += 1
+                    else:
+                        if ';' in cmdline:
+                            idx2 = cmdline.index(';') + 1
+                        else:
+                            idx2 = idx + 1
+                    cmdline = cmdline[:idx+1] + cmdline[idx2:]
                     self.cmdline.setText(cmdline)
+                    self.ope_count += 1
+                    self.cmd_counter.setText(f"{self.ope_count:4d}")
+
                 break
             # read next record
             line = self.read_fd.readline()
@@ -1976,7 +1990,8 @@ class RubikGame(ShowBase):
         if self.is_completed(self.cube1+self.cube2+self.cube3):
             print(f"completed now!!(time={self.laptime.strlaptime()})")
             # save cmdBuffer to log-file
-            self.confirm()
+            if not self.pattern_executing:
+                  self.confirm()
             self.write_opelog(f"completed now!!(time={self.laptime.strlaptime()})")
             # stop to update lap-time
             if self.laptime.enabled():
@@ -2659,6 +2674,7 @@ class RubikGame(ShowBase):
             #    cancel_flg = True
             if line[0] != '#':
                 if pt_id and cancel_flg == False:
+                    line += ';'     # add delimiter
                     self.entry_solution(pt_id, line)
                     print(f"entry_solution at {read_count}")
                 cancel_flg = False
@@ -2788,11 +2804,15 @@ class RubikGame(ShowBase):
     def pattern_get(self, params):
         print(f"pattern_get:{params}")
         #
-        opt_flg = True
-        try:
+        e_flg = False
+        if '-e' in params:
             params.remove('-e')
-        except:
-            opt_flg = False
+            e_flg = True
+        #    
+        self.step_exeflag = False
+        if '-s' in params:
+            params.remove('-s')
+            self.step_exeflag = True
         #    
         if len(params) == 1:
             # search the current pattern-id from db.
@@ -2820,7 +2840,7 @@ class RubikGame(ShowBase):
             cmdline += cmd.upper()
             self.cmdline.setText(cmdline)
             #
-            if opt_flg:
+            if e_flg:
                 # execute the operation with the searched solution 
                 self.exec_solution(cmd)
         return
@@ -2833,8 +2853,19 @@ class RubikGame(ShowBase):
                 with open(self.tempfile, mode='w+t') as fd:
                     idx = 0
                     while idx < len(cmdline):
-                        fd.write( cmdline[idx:idx+2] + '\n')
-                        idx += 2
+                        if self.step_exeflag == True:
+                            # excecute step by step
+                            fd.write( cmdline[idx:idx+2] + '\n')
+                            idx += 2
+                            if cmdline[idx] == ';':
+                                idx += 1
+                        else:
+                            if ';' in cmdline:
+                                idx2 = cmdline.index(';',idx)
+                            else:
+                                idx2 = len(cmdline)
+                            fd.write( cmdline[idx:idx2] + '\n')
+                            idx = idx2 + 1
             except:
                 print(f"{self.tempfile} can not be created.")
                 return
@@ -2845,6 +2876,7 @@ class RubikGame(ShowBase):
             self.ope_mode[0] = RubikGame.PLAY_MODE
             self.read_fd = open(self.tempfile, mode='r')
             self.pattern_executing = True
+            self.ope_count = 0
             self.readf_next()
             self.cli.prompt(">spaceキーで次行のコマンドを実行します。\n"\
                             " ctrl-aキーで最終行まで実行します。\n"\
