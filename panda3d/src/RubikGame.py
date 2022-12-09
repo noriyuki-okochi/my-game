@@ -4,7 +4,7 @@ import time
 import math
 import random
 #from turtle import color, position
-from panda3d.core import WindowProperties
+#from panda3d.core import WindowProperties
 from panda3d.core import TextNode
 from panda3d.core import DirectionalLight
 from panda3d.core import LVector3
@@ -156,7 +156,7 @@ class RubikGame(ShowBase):
         #
         # set window properties
         #
-        self.win_attr = WindowProperties()
+        #self.win_attr = WindowProperties()
         #
         self.disableMouse()
         #
@@ -1569,7 +1569,7 @@ class RubikGame(ShowBase):
                     idx = cmdline.index('：')
                     if self.step_exeflag:
                         idx2 = idx + 3
-                        if cmdline[idx2] == ';':
+                        if ';' in cmdline and cmdline[idx2] == ';':
                             idx2 += 1
                     else:
                         if ';' in cmdline:
@@ -2855,10 +2855,10 @@ class RubikGame(ShowBase):
                     while idx < len(cmdline):
                         if self.step_exeflag == True:
                             # excecute step by step
-                            fd.write( cmdline[idx:idx+2] + '\n')
-                            idx += 2
                             if cmdline[idx] == ';':
                                 idx += 1
+                            fd.write( cmdline[idx:idx+2] + '\n')
+                            idx += 2
                         else:
                             if ';' in cmdline:
                                 idx2 = cmdline.index(';',idx)
