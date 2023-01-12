@@ -34,10 +34,11 @@ class RubikGame(ShowBase):
         self.initial_start = True
         # defalut settinge value
         #    ['cmdfile-name', 
-        #     {0:don't auto-reg.|1:aoto-reg.}
-        #     {0:don't auto-search|1:aoto-search}
+        #     {'0':don't auto-reg.|'1':aoto-reg.},
+        #     {'0':don't auto-search|'1':aoto-search},
+        #     digit:auto_interval
         #    ]
-        self.setting = ["./dat/cmdfile", '1', '1']
+        self.setting = ["./dat/cmdfile", '1', '1', '1']
         # serialized-file
         self.settingfile = "./reg/setting.reg"
         # log-file
@@ -50,6 +51,7 @@ class RubikGame(ShowBase):
         self.read_count = 0
         self.ope_count = 0
         self.autoStart = False
+        self.auto_interval = int(self.setting[3])
         self.preDt = 0
         self.cmdKeyinSetting = False
         self.pattern_viewing = False
@@ -411,6 +413,9 @@ class RubikGame(ShowBase):
             with open(f"{self.settingfile}", 'rb') as fd:
                 self.setting = pickle.load(fd)
                 self.cmdfile = f"{self.setting[0]}" 
+                if len(self.setting) < 4:
+                    self.setting.append(str(self.auto_interval))
+                self.auto_interval = int(self.setting[3])
         except:
             print(f"setting-file:{self.settingfile} not exist.")
         print(f"setting:{self.setting}")
@@ -439,7 +444,8 @@ class RubikGame(ShowBase):
         if self.autoStart:
             dt = int(dt)
             #self.write_opelog(f"dt:{dt}")
-            if dt != self.preDt:
+            if dt > self.preDt + self.auto_interval:
+                print(f"FrameTime={dt}")
                 self.preDt = dt
                 if self.readf_next() == None:
                     self.cli.prompt('')
@@ -485,6 +491,7 @@ class RubikGame(ShowBase):
         menu_text = f"1.cmd. file name(str) : {self.setting[0]}\n"\
                     f"2.auto reg.[N=0/Y=1]  : {self.setting[1]}\n"\
                     f"3.auto search[N=0/Y=1]: {self.setting[2]}\n"\
+                    f"4.auto interval(digit): {self.setting[3]}\n"\
                     f"0.quit\n"
         self.menu.setText(menu_text)
         if reg:
