@@ -84,17 +84,17 @@ class RubikGame(ShowBase):
         # define Center-Cubes
         #
         #1 cube_s
-        self.cube_s = RubikCube(self, '1', 's', "models/misc/RubikCube")
+        self.cube_s = RubikCube(self, '1', 's', "./models/misc/RubikCube")
         #2 cube_n
-        self.cube_n = RubikCube(self, '1', 'n', "models/misc/RubikCube")
+        self.cube_n = RubikCube(self, '1', 'n', "./models/misc/RubikCube")
         #3 cube_e
-        self.cube_e = RubikCube(self, '1', 'e', "models/misc/RubikCube")
+        self.cube_e = RubikCube(self, '1', 'e', "./models/misc/RubikCube")
         #4 cube_w
-        self.cube_w = RubikCube(self, '1', 'w', "models/misc/RubikCube")
+        self.cube_w = RubikCube(self, '1', 'w', "./models/misc/RubikCube")
         #5 cube_t
-        self.cube_t = RubikCube(self, '1', 't', "models/misc/RubikCube")
+        self.cube_t = RubikCube(self, '1', 't', "./models/misc/RubikCube")
         #6 cube_b
-        self.cube_b = RubikCube(self, '1', 'b', "models/misc/RubikCube")
+        self.cube_b = RubikCube(self, '1', 'b', "./models/misc/RubikCube")
         #
         # define Corner-Cubes
         #
