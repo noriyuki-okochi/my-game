@@ -8,6 +8,7 @@ import random
 from panda3d.core import TextNode
 from panda3d.core import DirectionalLight
 from panda3d.core import LVector3
+from panda3d.core import Filename 
 
 from direct.showbase.ShowBase import ShowBase
 from direct.showbase.ShowBaseGlobal import globalClock
@@ -27,6 +28,8 @@ class RubikGame(ShowBase):
     SET_MODE = 1
     MENU_MODE = 2
     DB_PATH = "./db/Rubik-cube.db"
+    print(os.getcwd())
+    #print(ConfigVariableString("model-path"))
     def __init__(self):
         #ShowBase.__init__(self)
         super().__init__(self)
@@ -83,64 +86,66 @@ class RubikGame(ShowBase):
         #
         # define Center-Cubes
         #
+        model_path = Filename.fromOsSpecific(os.getcwd())
+        model_path += "/models/misc/RubikCube"
         #1 cube_s
-        self.cube_s = RubikCube(self, '1', 's', "./models/misc/RubikCube")
+        self.cube_s = RubikCube(self, '1', 's', model_path)
         #2 cube_n
-        self.cube_n = RubikCube(self, '1', 'n', "./models/misc/RubikCube")
+        self.cube_n = RubikCube(self, '1', 'n', model_path)
         #3 cube_e
-        self.cube_e = RubikCube(self, '1', 'e', "./models/misc/RubikCube")
+        self.cube_e = RubikCube(self, '1', 'e', model_path)
         #4 cube_w
-        self.cube_w = RubikCube(self, '1', 'w', "./models/misc/RubikCube")
+        self.cube_w = RubikCube(self, '1', 'w', model_path)
         #5 cube_t
-        self.cube_t = RubikCube(self, '1', 't', "./models/misc/RubikCube")
+        self.cube_t = RubikCube(self, '1', 't', model_path)
         #6 cube_b
-        self.cube_b = RubikCube(self, '1', 'b', "./models/misc/RubikCube")
+        self.cube_b = RubikCube(self, '1', 'b', model_path)
         #
         # define Corner-Cubes
         #
         #1 cube_bsw
-        self.cube_bsw = RubikCube(self, '3', 'bsw', "./models/misc/RubikCube")
+        self.cube_bsw = RubikCube(self, '3', 'bsw', model_path)
         #2 cube_bse
-        self.cube_bse = RubikCube(self, '3', 'bse', "./models/misc/RubikCube")
+        self.cube_bse = RubikCube(self, '3', 'bse', model_path)
         #3 cube_ben
-        self.cube_ben = RubikCube(self, '3', 'ben', "./models/misc/RubikCube")
+        self.cube_ben = RubikCube(self, '3', 'ben', model_path)
         #4 cube_bwn
-        self.cube_bwn = RubikCube(self, '3', 'bwn', "./models/misc/RubikCube")
+        self.cube_bwn = RubikCube(self, '3', 'bwn', model_path)
         #5 cube_tsw
-        self.cube_tsw = RubikCube(self, '3', 'tsw', "./models/misc/RubikCube")
+        self.cube_tsw = RubikCube(self, '3', 'tsw', model_path)
         #6 cube_tse
-        self.cube_tse = RubikCube(self, '3', 'tse', "./models/misc/RubikCube")
+        self.cube_tse = RubikCube(self, '3', 'tse', model_path)
         #7 cube_ten
-        self.cube_ten = RubikCube(self, '3', 'ten', "./models/misc/RubikCube")
+        self.cube_ten = RubikCube(self, '3', 'ten', model_path)
         #8 cube_twn
-        self.cube_twn = RubikCube(self, '3', 'twn', "./models/misc/RubikCube")
+        self.cube_twn = RubikCube(self, '3', 'twn', model_path)
         #
         # define Edge-Cubes
         # 
         #1 cube_sw
-        self.cube_sw = RubikCube(self, '2', 'sw', "./models/misc/RubikCube")
+        self.cube_sw = RubikCube(self, '2', 'sw', model_path)
         #2 cube_bs
-        self.cube_bs = RubikCube(self, '2', 'bs', "./models/misc/RubikCube")
+        self.cube_bs = RubikCube(self, '2', 'bs', model_path)
         #3 cube_se
-        self.cube_se = RubikCube(self, '2', 'se', "./models/misc/RubikCube")
+        self.cube_se = RubikCube(self, '2', 'se', model_path)
         #4 cube-ts
-        self.cube_ts = RubikCube(self, '2', 'ts', "./models/misc/RubikCube")
+        self.cube_ts = RubikCube(self, '2', 'ts', model_path)
         #5 cube_nw
-        self.cube_nw = RubikCube(self, '2', 'nw', "./models/misc/RubikCube")
+        self.cube_nw = RubikCube(self, '2', 'nw', model_path)
         #6 cube_bn
-        self.cube_bn = RubikCube(self, '2', 'bn', "./models/misc/RubikCube")
+        self.cube_bn = RubikCube(self, '2', 'bn', model_path)
         #7 cube_en
-        self.cube_ne = RubikCube(self, '2', 'ne', "./models/misc/RubikCube")
+        self.cube_ne = RubikCube(self, '2', 'ne', model_path)
         #8 cube-tn
-        self.cube_tn = RubikCube(self, '2', 'tn', "./models/misc/RubikCube")
+        self.cube_tn = RubikCube(self, '2', 'tn', model_path)
         #9 cube_bw
-        self.cube_bw = RubikCube(self, '2', 'bw', "./models/misc/RubikCube")
+        self.cube_bw = RubikCube(self, '2', 'bw', model_path)
         #10 cube_be
-        self.cube_be = RubikCube(self, '2', 'be', "./models/misc/RubikCube")
+        self.cube_be = RubikCube(self, '2', 'be', model_path)
         #11 cube-te
-        self.cube_te = RubikCube(self, '2', 'te', "./models/misc/RubikCube")
+        self.cube_te = RubikCube(self, '2', 'te', model_path)
         #12 cube-tw
-        self.cube_tw = RubikCube(self, '2', 'tw', "./models/misc/RubikCube")
+        self.cube_tw = RubikCube(self, '2', 'tw', model_path)
         #
         # center cubes list
         self.cube1 = [self.cube_s, self.cube_n, self.cube_e, self.cube_w, self.cube_t, self.cube_b]
