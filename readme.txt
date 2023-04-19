@@ -17,6 +17,8 @@
 	./Pipfile.lock
 
 〇起動方法
+	pipenv run game
+	 or
 	pipenv shell
 	python ./panda3d/src/Rubikgame.py
 
