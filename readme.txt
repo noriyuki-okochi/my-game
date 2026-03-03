@@ -1,21 +1,17 @@
-〇ファイル構成
-
+〇ファイル構成(WSL環境)
+　(/mnt/d/share/panda3d)
 	./dat
 	./db
 	./fonts
 	./log
 	./reg
 	./models
-	./panda3d/src/Rubikgame.py
-	             /rubikcube/
-	             /mysqlite3/
-	             /mycli/
-	             /laptime/
-	             /cmdcounter/
+	./panda3d/src      （~/python/panda3d/srcへのリンク）
 	./readme.txt
 
 〇起動方法
-
+	ホストOS側でX11サーバー(VcXsrv)を起動
+	pipenv shell
 	python ./panda3d/src/Rubikgame.py
 
 〇ゲーム方法
