@@ -10,7 +10,4 @@ panda3d = "*"
 
 [requires]
 python_version = "3.9"
-python_full_version = "3.9.5"
-[scripts]
-game = "python ./panda3d/src/RubikGame.py"
-
+python_full_version = "3.9.7"
