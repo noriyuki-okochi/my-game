@@ -4,10 +4,12 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-panda3d = "*"
+panda3d = "==1.10.11"
 
 [dev-packages]
 
 [requires]
 python_version = "3.9"
 python_full_version = "3.9.7"
+[scripts]
+game = "python ./panda3d/src/RubikGame.py"

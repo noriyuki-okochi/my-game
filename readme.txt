@@ -1,4 +1,4 @@
-〇ファイル構成
+〇ファイル構成（Win環境）
 
 	./dat
 	./db
@@ -13,9 +13,13 @@
 	             /laptime/
 	             /cmdcounter/
 	./readme.txt
+	./Pipfile
+	./Pipfile.lock
 
 〇起動方法
-
+	pipenv run game
+	 or
+	pipenv shell
 	python ./panda3d/src/Rubikgame.py
 
 〇ゲーム方法
