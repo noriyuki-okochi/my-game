@@ -13,14 +13,13 @@
 	             /laptime/
 	             /cmdcounter/
 	./readme.txt
-	./Pipfile
-	./Pipfile.lock
+	./requirement.txt
+	./.venv
 
 〇起動方法
-	pipenv run game
-	 or
-	pipenv shell
+	./.venv/scripts/activate
 	python ./panda3d/src/Rubikgame.py
+	deactivate
 
 〇ゲーム方法
 	1.「playing mode」を選択する。
