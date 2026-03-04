@@ -1,0 +1,17 @@
+version: '3'
+services:
+  python3:
+    restart: always
+    build: .
+    image: 'python3-panda3d'
+    container_name: 'rubik-cube'
+    working_dir: '/root/python'
+    tty: true
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ${SRC_PATH}:/root/python/panda3d/src
+    environment:
+      - SCREEN_WIDTH=1600
+      - SCREEN_HEIGHT=900
+      - DISPLAY=172.24.0.1:0.0
+  
