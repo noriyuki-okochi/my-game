@@ -5,7 +5,6 @@ dat/
 lesson/
 log/
 panda3d/samples/
-reg/
 WIN
 WSL
 *.pyc
